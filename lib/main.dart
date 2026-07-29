@@ -557,12 +557,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     children: [
       Expanded(
         child: TextField(
-          controller: TextEditingController.fromValue(
-            TextEditingValue(
-              text: _searchQuery,
-              selection: TextSelection.collapsed(offset: _searchQuery.length),
-            ),
-          ),
           onChanged: (val) {
             setState(() {
               _searchQuery = val;
