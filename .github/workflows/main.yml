@@ -23,6 +23,7 @@ jobs:
 
       - name: Build Web
         run: flutter build web --release
+        working-directory: ./admin_aspirasi_web
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
