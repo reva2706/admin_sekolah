@@ -553,6 +553,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     Expanded(
                       child: TextField(
                         onChanged: (val) => setState(() => _searchQuery = val),
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 14,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Cari Nama, NIS, Lokasi...',
                           prefixIcon: const Icon(Icons.search_rounded,
