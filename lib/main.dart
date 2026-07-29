@@ -38,7 +38,6 @@ class AdminApp extends StatelessWidget {
           primary: const Color(0xFF1E3A8A),
           secondary: const Color(0xFFD97706),
         ),
-        // TAMBAHKAN BLOK INI AGAR SEMUA KOTAK KETIK WARNA TEKSNYA JELAS
         inputDecorationTheme: const InputDecorationTheme(
           labelStyle: TextStyle(color: Colors.black87),
           hintStyle: TextStyle(color: Colors.grey),
@@ -552,44 +551,41 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 ),
               ),
               Padding(
-  padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-  child: Row(
-    children: [
-      Expanded(
-        child: TextField(
-          onChanged: (val) {
-            setState(() {
-              _searchQuery = val;
-            });
-          },
-          style: const TextStyle(
-            color: Colors.black, // Warna teks hitam pekat
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-          cursorColor: Colors.black, // Kursor hitam agar terlihat
-          decoration: InputDecoration(
-            hintText: 'Cari Nama, NIS, Lokasi...',
-            hintStyle: const TextStyle(color: Colors.grey),
-            prefixIcon: const Icon(Icons.search_rounded,
-                color: Color(0xFF0F172A), size: 20),
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-                vertical: 10, horizontal: 10),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-          ),
-        ),
-      ),
-      const SizedBox(width: 8),
-      // ... Dropdown filter status kamu ...
-    ],
-  ),
-),
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        onChanged: (val) {
+                          setState(() {
+                            _searchQuery = val;
+                          });
+                        },
+                        style: const TextStyle(
+                          color: Colors.black, // Warna teks hitam pekat
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        cursorColor: Colors.black, // Kursor hitam agar terlihat
+                        decoration: InputDecoration(
+                          hintText: 'Cari Nama, NIS, Lokasi...',
+                          hintStyle: const TextStyle(color: Colors.grey),
+                          prefixIcon: const Icon(Icons.search_rounded,
+                              color: Color(0xFF0F172A), size: 20),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 10, horizontal: 10),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       decoration: BoxDecoration(
@@ -620,8 +616,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                     style: TextStyle(fontSize: 12))),
                           ],
                           onChanged: (val) {
-                            if (val != null)
+                            if (val != null) {
                               setState(() => _selectedFilterStatus = val);
+                            }
                           },
                         ),
                       ),
