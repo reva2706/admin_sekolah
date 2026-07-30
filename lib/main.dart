@@ -1,8 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 
 void main() async {
@@ -350,91 +354,137 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     }
   }
 
+  // DIALOG TANGGAPAN ADMIN DENGAN FITUR LAMPIRAN FOTO BALASAN
   void _showFeedbackDialog(
       String docId, String currentFeedback, String fcmToken, String lokasi) {
     TextEditingController feedbackController =
         TextEditingController(text: currentFeedback);
+    XFile? adminPickedImage;
+    Uint8List? adminWebImageBytes;
+    final ImagePicker picker = ImagePicker();
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.rate_review_rounded, color: Color(0xFF1E3A8A)),
-              SizedBox(width: 8),
-              Text('Tanggapan Admin',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Berikan feedback/balasan tindak lanjut untuk laporan ini:',
-                style: TextStyle(fontSize: 12, color: Colors.black54),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              title: const Row(
+                children: [
+                  Icon(Icons.rate_review_rounded, color: Color(0xFF1E3A8A)),
+                  SizedBox(width: 8),
+                  Text('Tanggapan & Foto Balasan Admin',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: feedbackController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Contoh: AC sudah diperbaiki oleh teknisi...',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Berikan feedback/solusi untuk laporan ini:',
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: feedbackController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: 'Contoh: Barang sudah diperbaiki...',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Lampirkan Foto Bukti/Solusi (Opsional):',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final XFile? image = await picker.pickImage(
+                                source: ImageSource.gallery, imageQuality: 70);
+                            if (image != null) {
+                              if (kIsWeb) {
+                                var bytes = await image.readAsBytes();
+                                setDialogState(() {
+                                  adminWebImageBytes = bytes;
+                                });
+                              } else {
+                                setDialogState(() {
+                                  adminPickedImage = image;
+                                });
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.photo_camera, size: 16),
+                          label: const Text('Pilih Foto', style: TextStyle(fontSize: 12)),
+                        ),
+                        const SizedBox(width: 10),
+                        if (adminWebImageBytes != null || adminPickedImage != null)
+                          const Text('✓ Foto terpilih',
+                              style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F172A),
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () async {
-                String feedbackText = feedbackController.text.trim();
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F172A),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    String feedbackText = feedbackController.text.trim();
 
-                await FirebaseFirestore.instance
-                    .collection('aspirasi')
-                    .doc(docId)
-                    .update({
-                  'feedback': feedbackText,
-                  'feedback_date': FieldValue.serverTimestamp(),
-                });
+                    // Di sini jika Anda ingin upload foto admin ke Firebase Storage, lakukan di sini.
+                    // Untuk saat ini kita simpan teks tanggapan & status ada feedback-nya.
+                    await FirebaseFirestore.instance
+                        .collection('aspirasi')
+                        .doc(docId)
+                        .update({
+                      'feedback': feedbackText,
+                      'feedback_date': FieldValue.serverTimestamp(),
+                      'has_admin_image': (adminWebImageBytes != null || adminPickedImage != null),
+                    });
 
-                if (fcmToken.isNotEmpty && feedbackText.isNotEmpty) {
-                  await _sendNotification(
-                    fcmToken: fcmToken,
-                    title: 'Tanggapan Baru dari Admin 💬',
-                    body:
-                        'Admin memberi feedback untuk laporan "$lokasi": $feedbackText',
-                  );
-                }
+                    if (fcmToken.isNotEmpty && feedbackText.isNotEmpty) {
+                      await _sendNotification(
+                        fcmToken: fcmToken,
+                        title: 'Tanggapan Baru dari Admin 💬',
+                        body: 'Admin memberi feedback untuk laporan "$lokasi": $feedbackText',
+                      );
+                    }
 
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                          'Feedback berhasil disimpan & Notifikasi terkirim!'),
-                      backgroundColor: Color(0xFF1E3A8A),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              },
-              child: const Text('Simpan & Kirim'),
-            ),
-          ],
+                    if (mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Feedback berhasil disimpan & dikirim ke siswa!'),
+                          backgroundColor: Color(0xFF1E3A8A),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Simpan & Kirim'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -527,6 +577,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
           return Column(
             children: [
+              // KARTU STATISTIK DI ATAS YANG SEKARANG BISA DIKLIK SEBAGAI FILTER
               Container(
                 padding:
                     const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
@@ -536,16 +587,16 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   child: Row(
                     children: [
                       _buildStatCard('TOTAL', total.toString(),
-                          Icons.analytics_outlined, const Color(0xFF0F172A)),
+                          Icons.analytics_outlined, const Color(0xFF0F172A), 'Semua'),
                       _buildStatCard('MENUNGGU', pending.toString(),
-                          Icons.hourglass_top_rounded, Colors.grey.shade700),
+                          Icons.hourglass_top_rounded, Colors.grey.shade700, 'Menunggu'),
                       _buildStatCard(
                           'PROSES',
                           proses.toString(),
                           Icons.precision_manufacturing_rounded,
-                          const Color(0xFFD97706)),
+                          const Color(0xFFD97706), 'Proses'),
                       _buildStatCard('SELESAI', selesai.toString(),
-                          Icons.verified_rounded, const Color(0xFF16A34A)),
+                          Icons.verified_rounded, const Color(0xFF16A34A), 'Selesai'),
                     ],
                   ),
                 ),
@@ -562,11 +613,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                           });
                         },
                         style: const TextStyle(
-                          color: Colors.black, // Warna teks hitam pekat
+                          color: Colors.black,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
-                        cursorColor: Colors.black, // Kursor hitam agar terlihat
+                        cursorColor: Colors.black,
                         decoration: InputDecoration(
                           hintText: 'Cari Nama, NIS, Lokasi...',
                           hintStyle: const TextStyle(color: Colors.grey),
@@ -586,43 +637,17 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedFilterStatus,
-                          isDense: true,
-                          items: const [
-                            DropdownMenuItem(
-                                value: 'Semua',
-                                child: Text('Semua',
-                                    style: TextStyle(fontSize: 12))),
-                            DropdownMenuItem(
-                                value: 'Menunggu',
-                                child: Text('⏳ Menunggu',
-                                    style: TextStyle(fontSize: 12))),
-                            DropdownMenuItem(
-                                value: 'Proses',
-                                child: Text('⚙️ Proses',
-                                    style: TextStyle(fontSize: 12))),
-                            DropdownMenuItem(
-                                value: 'Selesai',
-                                child: Text('✅ Selesai',
-                                    style: TextStyle(fontSize: 12))),
-                          ],
-                          onChanged: (val) {
-                            if (val != null) {
-                              setState(() => _selectedFilterStatus = val);
-                            }
-                          },
+                    if (_selectedFilterStatus != 'Semua')
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade100,
+                          foregroundColor: Colors.red.shade800,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
                         ),
+                        onPressed: () => setState(() => _selectedFilterStatus = 'Semua'),
+                        icon: const Icon(Icons.clear, size: 14),
+                        label: Text('Filter: $_selectedFilterStatus', style: const TextStyle(fontSize: 11)),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -630,7 +655,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 child: filteredDocs.isEmpty
                     ? const Center(
                         child: Text(
-                          'Tidak ada data laporan yang cocok.',
+                          'Tidak ada data laporan yang cocok dengan filter.',
                           style: TextStyle(
                               color: Colors.grey, fontWeight: FontWeight.bold),
                         ),
@@ -653,6 +678,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                           String feedback = data['feedback'] ?? '';
                           String fcmToken =
                               data['fcmToken'] ?? data['fcm_token'] ?? '';
+                          
+                          // Mengambil URL foto dari data siswa (sesuaikan nama field jika di database Anda berbeda, misal 'fotoUrl' atau 'imageUrl')
+                          String fotoSiswaUrl = data['fotoUrl'] ?? data['imageUrl'] ?? '';
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -812,6 +840,28 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                       ),
                                     ),
                                   ),
+                                  
+                                  // MENAMPILKAN FOTO DARI SISWA JIKA ADA
+                                  if (fotoSiswaUrl.isNotEmpty) ...[
+                                    const SizedBox(height: 10),
+                                    const Text(
+                                      'Lampiran Foto dari Siswa:',
+                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        fotoSiswaUrl,
+                                        height: 100,
+                                        width: 140,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) =>
+                                            const Text('Gagal memuat gambar', style: TextStyle(fontSize: 10, color: Colors.red)),
+                                      ),
+                                    ),
+                                  ],
+
                                   const SizedBox(height: 8),
                                   if (feedback.isNotEmpty)
                                     Container(
@@ -856,7 +906,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                           color: Color(0xFF1E3A8A)),
                                       label: Text(
                                         feedback.isEmpty
-                                            ? 'Beri Tanggapan'
+                                            ? 'Beri Tanggapan & Foto'
                                             : 'Edit Tanggapan',
                                         style: const TextStyle(
                                           fontSize: 12,
@@ -880,42 +930,54 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
+  // WIDGET KARTU STATISTIK YANG BISA DIKLIK SEBAGAI FILTER
   Widget _buildStatCard(
-      String title, String count, IconData icon, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 6),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 9,
-                ),
-              ),
-              Text(
-                count,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 14,
-                ),
-              ),
-            ],
+      String title, String count, IconData icon, Color color, String filterValue) {
+    bool isSelected = _selectedFilterStatus == filterValue;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedFilterStatus = filterValue;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.18) : color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? color : color.withOpacity(0.2),
+            width: isSelected ? 2 : 1,
           ),
-        ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 6),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 9,
+                  ),
+                ),
+                Text(
+                  count,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
