@@ -1,13 +1,10 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp(
     options: const FirebaseOptions(
       apiKey: "AIzaSyB3_BlZbLyD1HeNZyZPDsAlNhlBqWDeUhU",
@@ -18,7 +15,6 @@ void main() async {
       appId: "1:265155033945:web:87b10e00993670c2922a48",
     ),
   );
-
   runApp(const AdminApp());
 }
 
@@ -28,9 +24,9 @@ class AdminApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Portal Admin Aspirasi',
+      title: 'Admin Aspirasi',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: const Color(0xFF0F172A)),
+      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),
       home: const AuthWrapper(),
     );
   }
@@ -48,34 +44,27 @@ class AuthWrapper extends StatelessWidget {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
         if (snapshot.hasData) {
-          return const AdminDashboardPage();
+          return const AdminDashboard();
         }
-        return const AdminLoginPage();
+        return const AdminLogin();
       },
     );
   }
 }
 
-class AdminLoginPage extends StatefulWidget {
-  const AdminLoginPage({super.key});
+class AdminLogin extends StatefulWidget {
+  const AdminLogin({super.key});
 
   @override
-  State<AdminLoginPage> createState() => _AdminLoginPageState();
+  State<AdminLogin> createState() => _AdminLoginState();
 }
 
-class _AdminLoginPageState extends State<AdminLoginPage> {
+class _AdminLoginState extends State<AdminLogin> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  Future<void> _loginAdmin() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email dan Password wajib diisi!')),
-      );
-      return;
-    }
-
+  Future<void> _login() async {
     setState(() => _isLoading = true);
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -85,7 +74,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login Gagal! Periksa kembali email & password.')),
+          const SnackBar(content: Text('Login Gagal! Periksa Email/Password.')),
         );
       }
     } finally {
@@ -99,7 +88,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
       backgroundColor: const Color(0xFF0F172A),
       body: Center(
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 400),
+          width: 380,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -124,7 +113,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _loginAdmin,
+                  onPressed: _isLoading ? null : _login,
                   child: _isLoading ? const CircularProgressIndicator() : const Text('MASUK'),
                 ),
               ),
@@ -136,75 +125,8 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   }
 }
 
-class AdminDashboardPage extends StatefulWidget {
-  const AdminDashboardPage({super.key});
-
-  @override
-  State<AdminDashboardPage> createState() => _AdminDashboardPageState();
-}
-
-class _AdminDashboardPageState extends State<AdminDashboardPage> {
-  String _filterStatus = 'Semua';
-
-  Future<void> _updateStatus(String docId, String statusBaru) async {
-    await FirebaseFirestore.instance.collection('aspirasi').doc(docId).update({'status': statusBaru});
-  }
-
-  void _showFeedbackDialog(String docId, String currentFeedback) {
-    final feedbackController = TextEditingController(text: currentFeedback);
-    Uint8List? webImageBytes;
-    final picker = ImagePicker();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Beri Tanggapan & Foto'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: feedbackController,
-                      maxLines: 3,
-                      decoration: const InputDecoration(hintText: 'Tulis tanggapan...'),
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-                        if (image != null) {
-                          var bytes = await image.readAsBytes();
-                          setDialogState(() => webImageBytes = bytes);
-                        }
-                      },
-                      icon: const Icon(Icons.image),
-                      label: const Text('Pilih Foto'),
-                    ),
-                    if (webImageBytes != null) const Text('Foto terpilih!', style: TextStyle(color: Colors.green)),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-                ElevatedButton(
-                  onPressed: () async {
-                    await FirebaseFirestore.instance.collection('aspirasi').doc(docId).update({
-                      'feedback': feedbackController.text.trim(),
-                    });
-                    if (mounted) Navigator.pop(context);
-                  },
-                  child: const Text('Simpan'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
+class AdminDashboard extends StatelessWidget {
+  const AdminDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -222,89 +144,25 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         stream: FirebaseFirestore.instance.collection('aspirasi').snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-
           var docs = snapshot.data!.docs;
-          var filteredDocs = docs.where((doc) {
-            var data = doc.data() as Map<String, dynamic>;
-            String status = data['status'] ?? 'Menunggu';
-            if (_filterStatus == 'Semua') return true;
-            return status == _filterStatus;
-          }).toList();
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: ['Semua', 'Menunggu', 'Proses', 'Selesai'].map((status) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: ChoiceChip(
-                        label: Text(status),
-                        selected: _filterStatus == status,
-                        onSelected: (bool selected) {
-                          setState(() => _filterStatus = status);
-                        },
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: filteredDocs.length,
-                  itemBuilder: (context, index) {
-                    var data = filteredDocs[index].data() as Map<String, dynamic>;
-                    String docId = filteredDocs[index].id;
-                    String status = data['status'] ?? 'Menunggu';
-                    String fotoSiswa = data['fotoUrl'] ?? data['imageUrl'] ?? '';
+          if (docs.isEmpty) {
+            return const Center(child: Text('Belum ada aspirasi masuk.'));
+          }
 
-                    return Card(
-                      margin: const EdgeInsets.all(8),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.between,
-                              children: [
-                                Text('${data['nama']} (${data['kelas'] ?? '-'})', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                DropdownButton<String>(
-                                  value: ['Menunggu', 'Proses', 'Selesai'].contains(status) ? status : 'Menunggu',
-                                  items: const [
-                                    DropdownMenuItem(value: 'Menunggu', child: Text('Menunggu')),
-                                    DropdownMenuItem(value: 'Proses', child: Text('Proses')),
-                                    DropdownMenuItem(value: 'Selesai', child: Text('Selesai')),
-                                  ],
-                                  onChanged: (val) {
-                                    if (val != null) _updateStatus(docId, val);
-                                  },
-                                ),
-                              ],
-                            ),
-                            Text('Lokasi: ${data['lokasi'] ?? '-'}'),
-                            Text('Keterangan: ${data['ket'] ?? '-'}'),
-                            if (fotoSiswa.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Image.network(fotoSiswa, height: 100, width: 100, fit: BoxFit.cover),
-                            ],
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () => _showFeedbackDialog(docId, data['feedback'] ?? ''),
-                                child: const Text('Beri Tanggapan'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+          return ListView.builder(
+            itemCount: docs.length,
+            itemBuilder: (context, index) {
+              var data = docs[index].data() as Map<String, dynamic>;
+              return Card(
+                margin: const EdgeInsets.all(8),
+                child: ListTile(
+                  title: Text(data['nama'] ?? 'Tanpa Nama'),
+                  subtitle: Text('Lokasi: ${data['lokasi'] ?? '-'}\nKet: ${data['ket'] ?? '-'}'),
+                  trailing: Text(data['status'] ?? 'Menunggu', style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
-              ),
-            ],
+              );
+            },
           );
         },
       ),
