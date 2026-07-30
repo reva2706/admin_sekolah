@@ -1,12 +1,9 @@
-import 'dart:convert';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,17 +28,9 @@ class AdminApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Portal Admin Aspirasi - SMKN 1 Sanden',
+      title: 'Portal Admin Aspirasi',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        fontFamily: 'Roboto',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0F172A),
-          primary: const Color(0xFF1E3A8A),
-          secondary: const Color(0xFFD97706),
-        ),
-      ),
+      theme: ThemeData(useMaterial3: true, colorSchemeSeed: const Color(0xFF0F172A)),
       home: const AuthWrapper(),
     );
   }
@@ -56,11 +45,7 @@ class AuthWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
-            ),
-          );
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
         if (snapshot.hasData) {
           return const AdminDashboardPage();
@@ -82,11 +67,12 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _isObscure = true;
 
   Future<void> _loginAdmin() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      _showSnackBar('Email dan Password wajib diisi!', Colors.orange.shade800);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email dan Password wajib diisi!')),
+      );
       return;
     }
 
@@ -98,102 +84,51 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
       );
     } catch (e) {
       if (mounted) {
-        _showSnackBar('Akses Ditolak! Kredensial tidak valid.', Colors.red.shade700);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login Gagal! Periksa kembali email & password.')),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _showSnackBar(String msg, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: color,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF090D16), Color(0xFF0F172A), Color(0xFF1E293B)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      backgroundColor: const Color(0xFF0F172A),
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
           ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 420),
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.96),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 30,
-                    offset: const Offset(0, 15),
-                  )
-                ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('LOGIN ADMIN', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: 'Email Admin'),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.admin_panel_settings_rounded, size: 48, color: Color(0xFFF59E0B)),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'PORTAL ADMIN ASPIRASI',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
-                  ),
-                  const SizedBox(height: 24),
-                  TextField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      labelText: 'Email Administrator',
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: _isObscure,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        icon: Icon(_isObscure ? Icons.visibility_off : Icons.visibility),
-                        onPressed: () => setState(() => _isObscure = !_isObscure),
-                      ),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _loginAdmin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F172A),
-                        foregroundColor: const Color(0xFFF59E0B),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Color(0xFFF59E0B))
-                          : const Text('MASUK', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Password'),
               ),
-            ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _loginAdmin,
+                  child: _isLoading ? const CircularProgressIndicator() : const Text('MASUK'),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -209,22 +144,16 @@ class AdminDashboardPage extends StatefulWidget {
 }
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
-  String _searchQuery = '';
-  String _selectedFilterStatus = 'Semua';
+  String _filterStatus = 'Semua';
 
-  Future<void> _updateStatus(String docId, String statusBaru, String lokasi) async {
+  Future<void> _updateStatus(String docId, String statusBaru) async {
     await FirebaseFirestore.instance.collection('aspirasi').doc(docId).update({'status': statusBaru});
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Status diubah ke: $statusBaru'), backgroundColor: Colors.green),
-      );
-    }
   }
 
   void _showFeedbackDialog(String docId, String currentFeedback) {
-    TextEditingController feedbackController = TextEditingController(text: currentFeedback);
+    final feedbackController = TextEditingController(text: currentFeedback);
     Uint8List? webImageBytes;
-    final ImagePicker picker = ImagePicker();
+    final picker = ImagePicker();
 
     showDialog(
       context: context,
@@ -232,61 +161,40 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: const Text('Tanggapan & Foto Admin', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              title: const Text('Beri Tanggapan & Foto'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
                       controller: feedbackController,
                       maxLines: 3,
-                      decoration: InputDecoration(
-                        hintText: 'Tulis tanggapan atau solusi...',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
+                      decoration: const InputDecoration(hintText: 'Tulis tanggapan...'),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     ElevatedButton.icon(
                       onPressed: () async {
-                        final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+                        final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
                         if (image != null) {
                           var bytes = await image.readAsBytes();
-                          setDialogState(() {
-                            webImageBytes = bytes;
-                          });
+                          setDialogState(() => webImageBytes = bytes);
                         }
                       },
-                      icon: const Icon(Icons.photo_camera, size: 16),
-                      label: const Text('Pilih Foto Balasan'),
+                      icon: const Icon(Icons.image),
+                      label: const Text('Pilih Foto'),
                     ),
-                    if (webImageBytes != null)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 8.0),
-                        child: Text('✓ Foto siap dikirim', style: TextStyle(color: Colors.green, fontSize: 12)),
-                      ),
+                    if (webImageBytes != null) const Text('Foto terpilih!', style: TextStyle(color: Colors.green)),
                   ],
                 ),
               ),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Batal'),
-                ),
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0F172A), foregroundColor: Colors.white),
                   onPressed: () async {
                     await FirebaseFirestore.instance.collection('aspirasi').doc(docId).update({
                       'feedback': feedbackController.text.trim(),
-                      'has_admin_image': webImageBytes != null,
                     });
-                    if (mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Tanggapan berhasil disimpan!'), backgroundColor: Colors.blue),
-                      );
-                    }
+                    if (mounted) Navigator.pop(context);
                   },
                   child: const Text('Simpan'),
                 ),
@@ -301,17 +209,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(colors: [Color(0xFF090D16), Color(0xFF0F172A), Color(0xFF1E3A8A)]),
-          ),
-        ),
-        title: const Text('Admin Control Center', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('Dashboard Admin Aspirasi'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Colors.white),
+            icon: const Icon(Icons.logout),
             onPressed: () => FirebaseAuth.instance.signOut(),
           ),
         ],
@@ -319,118 +221,84 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('aspirasi').snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('Belum ada data laporan.'));
-          }
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
 
-          var allDocs = snapshot.data!.docs;
-          int total = allDocs.length;
-          int pending = allDocs.where((d) => (d.data() as Map)['status'] == 'Menunggu').length;
-          int proses = allDocs.where((d) => (d.data() as Map)['status'] == 'Proses').length;
-          int selesai = allDocs.where((d) => (d.data() as Map)['status'] == 'Selesai').length;
-
-          var filteredDocs = allDocs.where((doc) {
+          var docs = snapshot.data!.docs;
+          var filteredDocs = docs.where((doc) {
             var data = doc.data() as Map<String, dynamic>;
-            String nama = (data['nama'] ?? '').toString().toLowerCase();
-            String nis = (data['nis'] ?? '').toString().toLowerCase();
             String status = data['status'] ?? 'Menunggu';
-
-            bool matchesSearch = nama.contains(_searchQuery.toLowerCase()) || nis.contains(_searchQuery.toLowerCase());
-            bool matchesFilter = _selectedFilterStatus == 'Semua' || status == _selectedFilterStatus;
-            return matchesSearch && matchesFilter;
+            if (_filterStatus == 'Semua') return true;
+            return status == _filterStatus;
           }).toList();
 
           return Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                color: Colors.white,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildStatCard('TOTAL', total.toString(), Colors.blue, 'Semua'),
-                      _buildStatCard('MENUNGGU', pending.toString(), Colors.grey.shade700, 'Menunggu'),
-                      _buildStatCard('PROSES', proses.toString(), Colors.orange, 'Proses'),
-                      _buildStatCard('SELESAI', selesai.toString(), Colors.green, 'Selesai'),
-                    ],
-                  ),
-                ),
-              ),
               Padding(
-                padding: const EdgeInsets.all(12),
-                child: TextField(
-                  onChanged: (val) => setState(() => _searchQuery = val),
-                  decoration: InputDecoration(
-                    hintText: 'Cari Nama atau NIS...',
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: ['Semua', 'Menunggu', 'Proses', 'Selesai'].map((status) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: ChoiceChip(
+                        label: Text(status),
+                        selected: _filterStatus == status,
+                        onSelected: (bool selected) {
+                          setState(() => _filterStatus = status);
+                        },
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.all(12),
                   itemCount: filteredDocs.length,
                   itemBuilder: (context, index) {
                     var data = filteredDocs[index].data() as Map<String, dynamic>;
                     String docId = filteredDocs[index].id;
                     String status = data['status'] ?? 'Menunggu';
-                    String fotoSiswaUrl = data['fotoUrl'] ?? data['imageUrl'] ?? '';
+                    String fotoSiswa = data['fotoUrl'] ?? data['imageUrl'] ?? '';
 
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.between,
-                            children: [
-                              Text('${data['nama']} (${data['kelas']})', style: const TextStyle(fontWeight: FontWeight.bold)),
-                              DropdownButton<String>(
-                                value: ['Menunggu', 'Proses', 'Selesai'].contains(status) ? status : 'Menunggu',
-                                items: const [
-                                  DropdownMenuItem(value: 'Menunggu', child: Text('Menunggu')),
-                                  DropdownMenuItem(value: 'Proses', child: Text('Proses')),
-                                  DropdownMenuItem(value: 'Selesai', child: Text('Selesai')),
-                                ],
-                                onChanged: (val) {
-                                  if (val != null) _updateStatus(docId, val, data['lokasi'] ?? '');
-                                },
-                              ),
+                    return Card(
+                      margin: const EdgeInsets.all(8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.between,
+                              children: [
+                                Text('${data['nama']} (${data['kelas'] ?? '-'})', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                DropdownButton<String>(
+                                  value: ['Menunggu', 'Proses', 'Selesai'].contains(status) ? status : 'Menunggu',
+                                  items: const [
+                                    DropdownMenuItem(value: 'Menunggu', child: Text('Menunggu')),
+                                    DropdownMenuItem(value: 'Proses', child: Text('Proses')),
+                                    DropdownMenuItem(value: 'Selesai', child: Text('Selesai')),
+                                  ],
+                                  onChanged: (val) {
+                                    if (val != null) _updateStatus(docId, val);
+                                  },
+                                ),
+                              ],
+                            ),
+                            Text('Lokasi: ${data['lokasi'] ?? '-'}'),
+                            Text('Keterangan: ${data['ket'] ?? '-'}'),
+                            if (fotoSiswa.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Image.network(fotoSiswa, height: 100, width: 100, fit: BoxFit.cover),
                             ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text('Lokasi: ${data['lokasi']}'),
-                          Text('Keterangan: ${data['ket'] ?? data['keterangan'] ?? '-'}'),
-                          if (fotoSiswaUrl.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(fotoSiswaUrl, height: 100, width: 130, fit: BoxFit.cover),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () => _showFeedbackDialog(docId, data['feedback'] ?? ''),
+                                child: const Text('Beri Tanggapan'),
+                              ),
                             ),
                           ],
-                          const SizedBox(height: 10),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton.icon(
-                              onPressed: () => _showFeedbackDialog(docId, data['feedback'] ?? ''),
-                              icon: const Icon(Icons.rate_review, size: 16),
-                              label: const Text('Beri Tanggapan & Foto'),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     );
                   },
@@ -439,29 +307,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             ],
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String title, String count, Color color, String filterValue) {
-    bool isSelected = _selectedFilterStatus == filterValue;
-    return InkWell(
-      onTap: () => setState(() => _selectedFilterStatus = filterValue),
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.2) : color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSelected ? color : color.withOpacity(0.3), width: isSelected ? 2 : 1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10)),
-            Text(count, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 16)),
-          ],
-        ),
       ),
     );
   }
