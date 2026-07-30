@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -42,19 +41,12 @@ class AdminApp extends StatelessWidget {
           primary: const Color(0xFF1E3A8A),
           secondary: const Color(0xFFD97706),
         ),
-        inputDecorationTheme: const InputDecorationTheme(
-          labelStyle: TextStyle(color: Colors.black87),
-          hintStyle: TextStyle(color: Colors.grey),
-        ),
       ),
       home: const AuthWrapper(),
     );
   }
 }
 
-// ==================================================================
-// AUTH WRAPPER
-// ==================================================================
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
@@ -79,9 +71,6 @@ class AuthWrapper extends StatelessWidget {
   }
 }
 
-// ==================================================================
-// 1. HALAMAN LOGIN ADMIN
-// ==================================================================
 class AdminLoginPage extends StatefulWidget {
   const AdminLoginPage({super.key});
 
@@ -109,8 +98,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
       );
     } catch (e) {
       if (mounted) {
-        _showSnackBar(
-            'Akses Ditolak! Kredensial tidak valid.', Colors.red.shade700);
+        _showSnackBar('Akses Ditolak! Kredensial tidak valid.', Colors.red.shade700);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -123,7 +111,6 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
         content: Text(msg, style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -131,158 +118,89 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFF090D16),
-                  Color(0xFF0F172A),
-                  Color(0xFF1E293B)
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF090D16), Color(0xFF0F172A), Color(0xFF1E293B)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 420),
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.96),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.4),
+                    blurRadius: 30,
+                    offset: const Offset(0, 15),
+                  )
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.admin_panel_settings_rounded, size: 48, color: Color(0xFFF59E0B)),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'PORTAL ADMIN ASPIRASI',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                  ),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      labelText: 'Email Administrator',
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: _isObscure,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        icon: Icon(_isObscure ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () => setState(() => _isObscure = !_isObscure),
+                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _loginAdmin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0F172A),
+                        foregroundColor: const Color(0xFFF59E0B),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Color(0xFFF59E0B))
+                          : const Text('MASUK', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 420),
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.96),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.4),
-                      blurRadius: 30,
-                      offset: const Offset(0, 15),
-                    )
-                  ],
-                  border: Border.all(
-                      color: const Color(0xFFD97706).withOpacity(0.3),
-                      width: 1.5),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
-                        ),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: const Color(0xFFF59E0B), width: 2),
-                      ),
-                      child: const Icon(Icons.admin_panel_settings_rounded,
-                          size: 38, color: Color(0xFFF59E0B)),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'PORTAL ADMIN ASPIRASI',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Sistem Pengaduan Aspirasi SMKN 1 Sanden',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.black54,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    TextField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                        labelText: 'Email Administrator',
-                        prefixIcon: const Icon(Icons.email_outlined,
-                            color: Color(0xFF1E3A8A)),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: _isObscure,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline,
-                            color: Color(0xFF1E3A8A)),
-                        suffixIcon: IconButton(
-                          icon: Icon(_isObscure
-                              ? Icons.visibility_off
-                              : Icons.visibility),
-                          onPressed: () =>
-                              setState(() => _isObscure = !_isObscure),
-                        ),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _loginAdmin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0F172A),
-                          foregroundColor: const Color(0xFFF59E0B),
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          side: const BorderSide(
-                              color: Color(0xFFD97706), width: 1),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                    color: Color(0xFFF59E0B), strokeWidth: 2),
-                              )
-                            : const Text(
-                                'MASUK KE CONTROL PANEL',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-// ==================================================================
-// 2. DASHBOARD ADMIN
-// ==================================================================
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
 
@@ -294,73 +212,18 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   String _searchQuery = '';
   String _selectedFilterStatus = 'Semua';
 
-  Future<void> _sendNotification({
-    required String fcmToken,
-    required String title,
-    required String body,
-  }) async {
-    if (fcmToken.isEmpty) return;
-
-    try {
-      await http.post(
-        Uri.parse('https://fcm.googleapis.com/fcm/send'),
-        headers: <String, String>{
-          'Content-Type': 'application/json',
-          'Authorization': 'key=YOUR_SERVER_KEY_HERE',
-        },
-        body: jsonEncode({
-          'to': fcmToken,
-          'priority': 'high',
-          'notification': {
-            'title': title,
-            'body': body,
-            'sound': 'default',
-          },
-          'data': {
-            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-            'status': 'updated',
-          },
-        }),
-      );
-    } catch (e) {
-      debugPrint("Gagal kirim notifikasi: $e");
-    }
-  }
-
-  Future<void> _updateStatus(
-      String docId, String statusBaru, String fcmToken, String lokasi) async {
-    await FirebaseFirestore.instance
-        .collection('aspirasi')
-        .doc(docId)
-        .update({'status': statusBaru});
-
-    if (fcmToken.isNotEmpty) {
-      await _sendNotification(
-        fcmToken: fcmToken,
-        title: 'Status Laporan Diperbarui 📢',
-        body: 'Laporan kamu di "$lokasi" telah diubah menjadi: $statusBaru',
-      );
-    }
-
+  Future<void> _updateStatus(String docId, String statusBaru, String lokasi) async {
+    await FirebaseFirestore.instance.collection('aspirasi').doc(docId).update({'status': statusBaru});
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'Status diperbarui menjadi: $statusBaru & Notifikasi dikirim!'),
-          backgroundColor: Colors.green.shade700,
-          behavior: SnackBarBehavior.floating,
-        ),
+        SnackBar(content: Text('Status diubah ke: $statusBaru'), backgroundColor: Colors.green),
       );
     }
   }
 
-  // DIALOG TANGGAPAN ADMIN DENGAN FITUR LAMPIRAN FOTO BALASAN
-  void _showFeedbackDialog(
-      String docId, String currentFeedback, String fcmToken, String lokasi) {
-    TextEditingController feedbackController =
-        TextEditingController(text: currentFeedback);
-    XFile? adminPickedImage;
-    Uint8List? adminWebImageBytes;
+  void _showFeedbackDialog(String docId, String currentFeedback) {
+    TextEditingController feedbackController = TextEditingController(text: currentFeedback);
+    Uint8List? webImageBytes;
     final ImagePicker picker = ImagePicker();
 
     showDialog(
@@ -369,118 +232,63 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              title: const Row(
-                children: [
-                  Icon(Icons.rate_review_rounded, color: Color(0xFF1E3A8A)),
-                  SizedBox(width: 8),
-                  Text('Tanggapan & Foto Balasan Admin',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                ],
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text('Tanggapan & Foto Admin', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Berikan feedback/solusi untuk laporan ini:',
-                      style: TextStyle(fontSize: 12, color: Colors.black54),
-                    ),
-                    const SizedBox(height: 12),
                     TextField(
                       controller: feedbackController,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        hintText: 'Contoh: Barang sudah diperbaiki...',
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
+                        hintText: 'Tulis tanggapan atau solusi...',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'Lampirkan Foto Bukti/Solusi (Opsional):',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+                        if (image != null) {
+                          var bytes = await image.readAsBytes();
+                          setDialogState(() {
+                            webImageBytes = bytes;
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.photo_camera, size: 16),
+                      label: const Text('Pilih Foto Balasan'),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: () async {
-                            final XFile? image = await picker.pickImage(
-                                source: ImageSource.gallery, imageQuality: 70);
-                            if (image != null) {
-                              if (kIsWeb) {
-                                var bytes = await image.readAsBytes();
-                                setDialogState(() {
-                                  adminWebImageBytes = bytes;
-                                });
-                              } else {
-                                setDialogState(() {
-                                  adminPickedImage = image;
-                                });
-                              }
-                            }
-                          },
-                          icon: const Icon(Icons.photo_camera, size: 16),
-                          label: const Text('Pilih Foto', style: TextStyle(fontSize: 12)),
-                        ),
-                        const SizedBox(width: 10),
-                        if (adminWebImageBytes != null || adminPickedImage != null)
-                          const Text('✓ Foto terpilih',
-                              style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
+                    if (webImageBytes != null)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8.0),
+                        child: Text('✓ Foto siap dikirim', style: TextStyle(color: Colors.green, fontSize: 12)),
+                      ),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+                  child: const Text('Batal'),
                 ),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F172A),
-                    foregroundColor: Colors.white,
-                  ),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0F172A), foregroundColor: Colors.white),
                   onPressed: () async {
-                    String feedbackText = feedbackController.text.trim();
-
-                    // Di sini jika Anda ingin upload foto admin ke Firebase Storage, lakukan di sini.
-                    // Untuk saat ini kita simpan teks tanggapan & status ada feedback-nya.
-                    await FirebaseFirestore.instance
-                        .collection('aspirasi')
-                        .doc(docId)
-                        .update({
-                      'feedback': feedbackText,
-                      'feedback_date': FieldValue.serverTimestamp(),
-                      'has_admin_image': (adminWebImageBytes != null || adminPickedImage != null),
+                    await FirebaseFirestore.instance.collection('aspirasi').doc(docId).update({
+                      'feedback': feedbackController.text.trim(),
+                      'has_admin_image': webImageBytes != null,
                     });
-
-                    if (fcmToken.isNotEmpty && feedbackText.isNotEmpty) {
-                      await _sendNotification(
-                        fcmToken: fcmToken,
-                        title: 'Tanggapan Baru dari Admin 💬',
-                        body: 'Admin memberi feedback untuk laporan "$lokasi": $feedbackText',
-                      );
-                    }
-
                     if (mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Feedback berhasil disimpan & dikirim ke siswa!'),
-                          backgroundColor: Color(0xFF1E3A8A),
-                          behavior: SnackBarBehavior.floating,
-                        ),
+                        const SnackBar(content: Text('Tanggapan berhasil disimpan!'), backgroundColor: Colors.blue),
                       );
                     }
                   },
-                  child: const Text('Simpan & Kirim'),
+                  child: const Text('Simpan'),
                 ),
               ],
             );
@@ -495,33 +303,15 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        elevation: 4,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF090D16), Color(0xFF0F172A), Color(0xFF1E3A8A)],
-            ),
+            gradient: LinearGradient(colors: [Color(0xFF090D16), Color(0xFF0F172A), Color(0xFF1E3A8A)]),
           ),
         ),
-        title: const Row(
-          children: [
-            Icon(Icons.workspace_premium_rounded,
-                color: Color(0xFFF59E0B), size: 22),
-            SizedBox(width: 8),
-            Text(
-              'Admin Control Center',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
+        title: const Text('Admin Control Center', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: Colors.white),
-            tooltip: 'Keluar',
             onPressed: () => FirebaseAuth.instance.signOut(),
           ),
         ],
@@ -530,398 +320,121 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         stream: FirebaseFirestore.instance.collection('aspirasi').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
-
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
-              child: Text(
-                'Belum ada data aspirasi masuk dari siswa.',
-                style:
-                    TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
-              ),
-            );
+            return const Center(child: Text('Belum ada data laporan.'));
           }
 
           var allDocs = snapshot.data!.docs;
-
           int total = allDocs.length;
-          int pending = allDocs
-              .where((d) => (d.data() as Map)['status'] == 'Menunggu')
-              .length;
-          int proses = allDocs
-              .where((d) => (d.data() as Map)['status'] == 'Proses')
-              .length;
-          int selesai = allDocs
-              .where((d) => (d.data() as Map)['status'] == 'Selesai')
-              .length;
+          int pending = allDocs.where((d) => (d.data() as Map)['status'] == 'Menunggu').length;
+          int proses = allDocs.where((d) => (d.data() as Map)['status'] == 'Proses').length;
+          int selesai = allDocs.where((d) => (d.data() as Map)['status'] == 'Selesai').length;
 
           var filteredDocs = allDocs.where((doc) {
             var data = doc.data() as Map<String, dynamic>;
             String nama = (data['nama'] ?? '').toString().toLowerCase();
             String nis = (data['nis'] ?? '').toString().toLowerCase();
-            String lokasi = (data['lokasi'] ?? '').toString().toLowerCase();
             String status = data['status'] ?? 'Menunggu';
 
-            bool matchesSearch = nama.contains(_searchQuery.toLowerCase()) ||
-                nis.contains(_searchQuery.toLowerCase()) ||
-                lokasi.contains(_searchQuery.toLowerCase());
-
-            bool matchesFilter = _selectedFilterStatus == 'Semua' ||
-                status == _selectedFilterStatus;
-
+            bool matchesSearch = nama.contains(_searchQuery.toLowerCase()) || nis.contains(_searchQuery.toLowerCase());
+            bool matchesFilter = _selectedFilterStatus == 'Semua' || status == _selectedFilterStatus;
             return matchesSearch && matchesFilter;
           }).toList();
 
           return Column(
             children: [
-              // KARTU STATISTIK DI ATAS YANG SEKARANG BISA DIKLIK SEBAGAI FILTER
               Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                padding: const EdgeInsets.all(12),
                 color: Colors.white,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildStatCard('TOTAL', total.toString(),
-                          Icons.analytics_outlined, const Color(0xFF0F172A), 'Semua'),
-                      _buildStatCard('MENUNGGU', pending.toString(),
-                          Icons.hourglass_top_rounded, Colors.grey.shade700, 'Menunggu'),
-                      _buildStatCard(
-                          'PROSES',
-                          proses.toString(),
-                          Icons.precision_manufacturing_rounded,
-                          const Color(0xFFD97706), 'Proses'),
-                      _buildStatCard('SELESAI', selesai.toString(),
-                          Icons.verified_rounded, const Color(0xFF16A34A), 'Selesai'),
+                      _buildStatCard('TOTAL', total.toString(), Colors.blue, 'Semua'),
+                      _buildStatCard('MENUNGGU', pending.toString(), Colors.grey.shade700, 'Menunggu'),
+                      _buildStatCard('PROSES', proses.toString(), Colors.orange, 'Proses'),
+                      _buildStatCard('SELESAI', selesai.toString(), Colors.green, 'Selesai'),
                     ],
                   ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        onChanged: (val) {
-                          setState(() {
-                            _searchQuery = val;
-                          });
-                        },
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        cursorColor: Colors.black,
-                        decoration: InputDecoration(
-                          hintText: 'Cari Nama, NIS, Lokasi...',
-                          hintStyle: const TextStyle(color: Colors.grey),
-                          prefixIcon: const Icon(Icons.search_rounded,
-                              color: Color(0xFF0F172A), size: 20),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 10),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                BorderSide(color: Colors.grey.shade300),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    if (_selectedFilterStatus != 'Semua')
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade100,
-                          foregroundColor: Colors.red.shade800,
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                        ),
-                        onPressed: () => setState(() => _selectedFilterStatus = 'Semua'),
-                        icon: const Icon(Icons.clear, size: 14),
-                        label: Text('Filter: $_selectedFilterStatus', style: const TextStyle(fontSize: 11)),
-                      ),
-                  ],
+                padding: const EdgeInsets.all(12),
+                child: TextField(
+                  onChanged: (val) => setState(() => _searchQuery = val),
+                  decoration: InputDecoration(
+                    hintText: 'Cari Nama atau NIS...',
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
                 ),
               ),
               Expanded(
-                child: filteredDocs.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Tidak ada data laporan yang cocok dengan filter.',
-                          style: TextStyle(
-                              color: Colors.grey, fontWeight: FontWeight.bold),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: filteredDocs.length,
-                        itemBuilder: (context, index) {
-                          var data = filteredDocs[index].data()
-                              as Map<String, dynamic>;
-                          String docId = filteredDocs[index].id;
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: filteredDocs.length,
+                  itemBuilder: (context, index) {
+                    var data = filteredDocs[index].data() as Map<String, dynamic>;
+                    String docId = filteredDocs[index].id;
+                    String status = data['status'] ?? 'Menunggu';
+                    String fotoSiswaUrl = data['fotoUrl'] ?? data['imageUrl'] ?? '';
 
-                          String nama = data['nama'] ?? 'Siswa';
-                          String nis = data['nis'] ?? '-';
-                          String kelas = data['kelas'] ?? '-';
-                          String kategori = data['id_kategori'] ?? 'Umum';
-                          String lokasi = data['lokasi'] ?? '-';
-                          String ket = data['ket'] ?? '-';
-                          String status = data['status'] ?? 'Menunggu';
-                          String feedback = data['feedback'] ?? '';
-                          String fcmToken =
-                              data['fcmToken'] ?? data['fcm_token'] ?? '';
-                          
-                          // Mengambil URL foto dari data siswa (sesuaikan nama field jika di database Anda berbeda, misal 'fotoUrl' atau 'imageUrl')
-                          String fotoSiswaUrl = data['fotoUrl'] ?? data['imageUrl'] ?? '';
-
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                  color: Colors.grey.shade200, width: 1.2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.02),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                )
-                              ],
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(14.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFEFF6FF),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          border: Border.all(
-                                              color: const Color(0xFFBFDBFE)),
-                                        ),
-                                        child: Text(
-                                          kategori,
-                                          style: const TextStyle(
-                                            color: Color(0xFF1D4ED8),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 11,
-                                          ),
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade50,
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          border: Border.all(
-                                              color: Colors.grey.shade300),
-                                        ),
-                                        child: DropdownButtonHideUnderline(
-                                          child: DropdownButton<String>(
-                                            value: [
-                                              'Menunggu',
-                                              'Proses',
-                                              'Selesai'
-                                            ].contains(status)
-                                                ? status
-                                                : 'Menunggu',
-                                            isDense: true,
-                                            items: const [
-                                              DropdownMenuItem(
-                                                value: 'Menunggu',
-                                                child: Text('⏳ Menunggu',
-                                                    style: TextStyle(
-                                                        color: Colors.grey,
-                                                        fontSize: 11,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              ),
-                                              DropdownMenuItem(
-                                                value: 'Proses',
-                                                child: Text('⚙️ Proses',
-                                                    style: TextStyle(
-                                                        color:
-                                                            Color(0xFFD97706),
-                                                        fontSize: 11,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              ),
-                                              DropdownMenuItem(
-                                                value: 'Selesai',
-                                                child: Text('✅ Selesai',
-                                                    style: TextStyle(
-                                                        color:
-                                                            Color(0xFF16A34A),
-                                                        fontSize: 11,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              ),
-                                            ],
-                                            onChanged: (val) {
-                                              if (val != null) {
-                                                _updateStatus(docId, val,
-                                                    fcmToken, lokasi);
-                                              }
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    '$nama ($kelas)',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                      color: Color(0xFF0F172A),
-                                    ),
-                                  ),
-                                  Text(
-                                    'NIS: $nis',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.black45,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on_rounded,
-                                          size: 14, color: Colors.redAccent),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          'Lokasi: $lokasi',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 12,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade50,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                          color: Colors.grey.shade200),
-                                    ),
-                                    child: Text(
-                                      '💬 Keterangan: $ket',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                  ),
-                                  
-                                  // MENAMPILKAN FOTO DARI SISWA JIKA ADA
-                                  if (fotoSiswaUrl.isNotEmpty) ...[
-                                    const SizedBox(height: 10),
-                                    const Text(
-                                      'Lampiran Foto dari Siswa:',
-                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                        fotoSiswaUrl,
-                                        height: 100,
-                                        width: 140,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) =>
-                                            const Text('Gagal memuat gambar', style: TextStyle(fontSize: 10, color: Colors.red)),
-                                      ),
-                                    ),
-                                  ],
-
-                                  const SizedBox(height: 8),
-                                  if (feedback.isNotEmpty)
-                                    Container(
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFEF3C7),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                            color: const Color(0xFFFDE68A)),
-                                      ),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Icon(Icons.admin_panel_settings,
-                                              size: 16,
-                                              color: Color(0xFFD97706)),
-                                          const SizedBox(width: 6),
-                                          Expanded(
-                                            child: Text(
-                                              'Tanggapan Admin: $feedback',
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: Color(0xFF92400E),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  const SizedBox(height: 6),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton.icon(
-                                      onPressed: () => _showFeedbackDialog(
-                                          docId, feedback, fcmToken, lokasi),
-                                      icon: const Icon(
-                                          Icons.rate_review_outlined,
-                                          size: 14,
-                                          color: Color(0xFF1E3A8A)),
-                                      label: Text(
-                                        feedback.isEmpty
-                                            ? 'Beri Tanggapan & Foto'
-                                            : 'Edit Tanggapan',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF1E3A8A),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)],
                       ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.between,
+                            children: [
+                              Text('${data['nama']} (${data['kelas']})', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              DropdownButton<String>(
+                                value: ['Menunggu', 'Proses', 'Selesai'].contains(status) ? status : 'Menunggu',
+                                items: const [
+                                  DropdownMenuItem(value: 'Menunggu', child: Text('Menunggu')),
+                                  DropdownMenuItem(value: 'Proses', child: Text('Proses')),
+                                  DropdownMenuItem(value: 'Selesai', child: Text('Selesai')),
+                                ],
+                                onChanged: (val) {
+                                  if (val != null) _updateStatus(docId, val, data['lokasi'] ?? '');
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text('Lokasi: ${data['lokasi']}'),
+                          Text('Keterangan: ${data['ket'] ?? data['keterangan'] ?? '-'}'),
+                          if (fotoSiswaUrl.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(fotoSiswaUrl, height: 100, width: 130, fit: BoxFit.cover),
+                            ),
+                          ],
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton.icon(
+                              onPressed: () => _showFeedbackDialog(docId, data['feedback'] ?? ''),
+                              icon: const Icon(Icons.rate_review, size: 16),
+                              label: const Text('Beri Tanggapan & Foto'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           );
@@ -930,52 +443,23 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
-  // WIDGET KARTU STATISTIK YANG BISA DIKLIK SEBAGAI FILTER
-  Widget _buildStatCard(
-      String title, String count, IconData icon, Color color, String filterValue) {
+  Widget _buildStatCard(String title, String count, Color color, String filterValue) {
     bool isSelected = _selectedFilterStatus == filterValue;
     return InkWell(
-      onTap: () {
-        setState(() {
-          _selectedFilterStatus = filterValue;
-        });
-      },
+      onTap: () => setState(() => _selectedFilterStatus = filterValue),
       child: Container(
         margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.18) : color.withOpacity(0.08),
+          color: isSelected ? color.withOpacity(0.2) : color.withOpacity(0.08),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected ? color : color.withOpacity(0.2),
-            width: isSelected ? 2 : 1,
-          ),
+          border: Border.all(color: isSelected ? color : color.withOpacity(0.3), width: isSelected ? 2 : 1),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 6),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 9,
-                  ),
-                ),
-                Text(
-                  count,
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
+            Text(title, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10)),
+            Text(count, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 16)),
           ],
         ),
       ),
