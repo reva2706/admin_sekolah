@@ -162,9 +162,11 @@ class _AdminLoginState extends State<AdminLogin> {
                         const SizedBox(height: 28),
                         TextField(
                           controller: _emailController,
+                          style: const TextStyle(color: Colors.black87),
                           keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
                             hintText: 'Email Administrator',
+                            hintStyle: const TextStyle(color: Colors.grey),
                             prefixIcon: const Icon(Icons.email_outlined),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -174,9 +176,11 @@ class _AdminLoginState extends State<AdminLogin> {
                         const SizedBox(height: 16),
                         TextField(
                           controller: _passwordController,
+                          style: const TextStyle(color: Colors.black87),
                           obscureText: _obscureText,
                           decoration: InputDecoration(
                             hintText: 'Password',
+                            hintStyle: const TextStyle(color: Colors.grey),
                             prefixIcon: const Icon(Icons.lock_outline),
                             suffixIcon: IconButton(
                               icon: Icon(_obscureText
@@ -246,7 +250,7 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   String searchQuery = '';
-  String selectedFilter = 'Semua'; // Filters: Semua, Menunggu, Diproses, Selesai
+  String selectedFilter = 'Semua';
 
   String _formatTimestamp(dynamic timestamp) {
     if (timestamp == null) return '-';
@@ -255,6 +259,35 @@ class _AdminDashboardState extends State<AdminDashboard> {
       return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     }
     return timestamp.toString();
+  }
+
+  // Pengecekan Lokasi & Kategori
+  String _getLokasi(Map<String, dynamic> data) {
+    String kat = data['kategori'] ?? '';
+    String lok = data['lokasi'] ?? '';
+    if (kat.isNotEmpty && lok.isNotEmpty) {
+      return '$kat ($lok)';
+    }
+    return lok.isNotEmpty ? lok : (kat.isNotEmpty ? kat : '-');
+  }
+
+  // Pengecekan Keterangan Laporan
+  String _getKeterangan(Map<String, dynamic> data) {
+    return data['keterangan'] ??
+        data['detail'] ??
+        data['isi'] ??
+        data['ket'] ??
+        data['deskripsi'] ??
+        '-';
+  }
+
+  // Pengecekan Foto Siswa
+  String? _getFotoSiswa(Map<String, dynamic> data) {
+    return data['fotoUrl'] ??
+        data['imageUrl'] ??
+        data['fotoUrlSiswa'] ??
+        data['foto'] ??
+        data['image'];
   }
 
   @override
@@ -286,7 +319,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
           var docs = snapshot.data?.docs ?? [];
 
-          // Hitung Jumlah untuk Kartu Statistik
           int total = docs.length;
           int menunggu = docs.where((doc) {
             var st = (doc.data() as Map<String, dynamic>)['status'] ?? 'Menunggu';
@@ -301,12 +333,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
             return st == 'Selesai';
           }).length;
 
-          // Filter Data Berdasarkan Kartu Terpilih & Query Pencarian
           var filteredDocs = docs.where((doc) {
             var data = doc.data() as Map<String, dynamic>;
             String status = data['status'] ?? 'Menunggu';
-            String nama = (data['nama'] ?? '').toString().toLowerCase();
-            String nis = (data['nis'] ?? '').toString().toLowerCase();
+            String nama = (data['nama'] ?? data['namaSiswa'] ?? '').toString().toLowerCase();
+            String nis = (data['nis'] ?? data['nisn'] ?? '').toString().toLowerCase();
             String query = searchQuery.toLowerCase();
 
             bool matchesFilter = (selectedFilter == 'Semua') || (status == selectedFilter);
@@ -320,7 +351,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Kartu Statistik Interaktif
+                // Kartu Statistik
                 LayoutBuilder(
                   builder: (context, constraints) {
                     double cardWidth = constraints.maxWidth > 800
@@ -364,11 +395,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 const SizedBox(height: 28),
 
-                // Bar Pencarian & Indikator Filter
+                // Kolom Pencarian (Diperjelas Teks Input & Hint Text)
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                         onChanged: (value) {
                           setState(() {
                             searchQuery = value;
@@ -376,12 +412,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         },
                         decoration: InputDecoration(
                           hintText: 'Cari berdasarkan NIS atau Nama Siswa...',
-                          prefixIcon: const Icon(Icons.search),
+                          hintStyle: const TextStyle(color: Colors.black45, fontSize: 14),
+                          prefixIcon: const Icon(Icons.search, color: Color(0xFF0F1D38)),
                           filled: true,
                           fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
+                            borderSide: const BorderSide(color: Colors.black26),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.black26),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFF0F1D38), width: 2),
                           ),
                         ),
                       ),
@@ -389,7 +435,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     if (selectedFilter != 'Semua') ...[
                       const SizedBox(width: 12),
                       Chip(
-                        label: Text('Kategori: $selectedFilter'),
+                        label: Text('Filter: $selectedFilter'),
                         deleteIcon: const Icon(Icons.close, size: 18),
                         onDeleted: () {
                           setState(() {
@@ -402,7 +448,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 const SizedBox(height: 24),
 
-                // Tabel Laporan Masuk
+                // Tabel Data
                 Card(
                   elevation: 2,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -415,7 +461,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Daftar Laporan ($selectedFilter)',
+                              'Daftar Laporan Aspirasi ($selectedFilter)',
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                             Text('${filteredDocs.length} Data Ditampilkan',
@@ -426,32 +472,34 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         filteredDocs.isEmpty
                             ? const Padding(
                                 padding: EdgeInsets.all(32.0),
-                                child: Center(child: Text('Data tidak ditemukan / Belum ada laporan pada kategori ini.')),
+                                child: Center(child: Text('Data tidak ditemukan.')),
                               )
                             : SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: DataTable(
                                   columns: const [
                                     DataColumn(label: Text('Tanggal')),
-                                    DataColumn(label: Text('NIS')),
+                                    DataColumn(label: Text('NIS / Kelas')),
                                     DataColumn(label: Text('Nama Siswa')),
-                                    DataColumn(label: Text('Lokasi / Judul')),
+                                    DataColumn(label: Text('Kategori / Lokasi')),
                                     DataColumn(label: Text('Keterangan')),
                                     DataColumn(label: Text('Status')),
                                     DataColumn(label: Text('Aksi')),
                                   ],
                                   rows: filteredDocs.map((doc) {
                                     var data = doc.data() as Map<String, dynamic>;
-                                    String tanggal = _formatTimestamp(data['timestamp'] ?? data['createdAt'] ?? data['tanggal']);
-                                    String nis = data['nis'] ?? '-';
+                                    String tanggal = _formatTimestamp(data['createdAt'] ?? data['timestamp']);
+                                    String nis = data['nis'] ?? data['nisn'] ?? '-';
+                                    String kelas = data['kelas'] ?? '';
+                                    String nisKelas = kelas.isNotEmpty ? '$nis ($kelas)' : nis;
                                     String nama = data['nama'] ?? 'Tanpa Nama';
-                                    String lokasi = data['lokasi'] ?? data['judul'] ?? '-';
-                                    String ket = data['ket'] ?? data['isi'] ?? '-';
+                                    String lokasi = _getLokasi(data);
+                                    String ket = _getKeterangan(data);
                                     String status = data['status'] ?? 'Menunggu';
 
                                     return DataRow(cells: [
                                       DataCell(Text(tanggal)),
-                                      DataCell(Text(nis)),
+                                      DataCell(Text(nisKelas)),
                                       DataCell(Text(nama)),
                                       DataCell(Text(lokasi)),
                                       DataCell(Text(
@@ -491,7 +539,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // WIDGET KARTU STATISTIK INTERAKTIF
   Widget _buildClickableStatCard(String title, String count, Color color, double width, String filterKey) {
     bool isSelected = selectedFilter == filterKey;
     return InkWell(
@@ -557,7 +604,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // DIALOG TANGGAPAN DAN PENGIRIMAN BALASAN KE SISWA
+  // DIALOG RESPONS / DETAIL LAPORAN
   void _showDetailDialog(BuildContext context, String docId, Map<String, dynamic> data) {
     String selectedStatus = data['status'] ?? 'Menunggu';
     final feedbackController = TextEditingController(text: data['feedbackAdmin'] ?? '');
@@ -572,10 +619,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
 
-            // Memilih Foto Balasan Langsung dari Galeri/Folder Komputer (Tanpa Kamera)
             void pickGalleryImage() {
               final html.FileUploadInputElement input = html.FileUploadInputElement();
-              input.accept = 'image/*'; // Khusus format file gambar dari Galeri
+              input.accept = 'image/*';
               input.click();
 
               input.onChange.listen((event) {
@@ -593,6 +639,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
               });
             }
 
+            String ketSiswa = _getKeterangan(data);
+            String? fotoSiswaUrl = _getFotoSiswa(data);
+            bool hasImageFlag = data['hasImage'] == true;
+
             return AlertDialog(
               title: Text('Detail Laporan - ID: $docId'),
               content: SizedBox(
@@ -601,7 +651,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Informasi Tanggal dan Identitas Siswa
+                      // Ringkasan
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -611,56 +661,56 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Tanggal Laporan: ${_formatTimestamp(data['timestamp'] ?? data['createdAt'] ?? data['tanggal'])}',
+                            Text('Tanggal: ${_formatTimestamp(data['createdAt'] ?? data['timestamp'])}',
                                 style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.indigo)),
                             const SizedBox(height: 4),
-                            Text('Siswa: ${data['nama'] ?? 'Tanpa Nama'} (${data['nis'] ?? '-'})',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text('Nama Siswa: ${data['nama'] ?? 'Tanpa Nama'} | Kelas: ${data['kelas'] ?? '-'} | NIS: ${data['nis'] ?? '-'}',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                             const SizedBox(height: 4),
-                            Text('Lokasi / Judul: ${data['lokasi'] ?? data['judul'] ?? '-'}'),
+                            Text('Kategori / Lokasi: ${_getLokasi(data)}'),
                           ],
                         ),
                       ),
                       const SizedBox(height: 12),
 
-                      // Keterangan dari Siswa
+                      // Keterangan Siswa
                       const Text('Keterangan / Rincian dari Siswa:', style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
-                      Text(data['ket'] ?? data['isi'] ?? '-', style: const TextStyle(fontSize: 14)),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          ketSiswa.isEmpty ? '-' : ketSiswa,
+                          style: const TextStyle(fontSize: 14, color: Colors.black87),
+                        ),
+                      ),
                       const SizedBox(height: 12),
 
                       // Foto dari Siswa
                       const Text('Foto Bukti dari Siswa:', style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      (data['fotoUrl'] != null || data['fotoUrlSiswa'] != null)
+                      (fotoSiswaUrl != null && fotoSiswaUrl.isNotEmpty)
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
-                                data['fotoUrl'] ?? data['fotoUrlSiswa'],
+                                fotoSiswaUrl,
                                 height: 180,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
-                                    const Text('Gagal memuat foto dari siswa.'),
+                                    const Text('Gagal memuat foto dari siswa.', style: TextStyle(color: Colors.red)),
                               ),
                             )
-                          : const Text('Siswa tidak melampirkan foto.', style: TextStyle(color: Colors.grey)),
-
-                      // Feedback/Respon dari Siswa (Jika ada)
-                      if (data['feedbackSiswa'] != null && data['feedbackSiswa'].toString().isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        const Text('Tanggapan Balik dari Siswa:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.deepOrange)),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
-                            border: Border.all(color: Colors.orange.shade200),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(data['feedbackSiswa'].toString()),
-                        ),
-                      ],
+                          : Text(
+                              hasImageFlag
+                                  ? 'Siswa melampirkan foto di HP, tetapi URL foto belum tersimpan di Firestore.'
+                                  : 'Siswa tidak melampirkan foto.',
+                              style: TextStyle(color: hasImageFlag ? Colors.orange.shade800 : Colors.grey, fontSize: 13),
+                            ),
 
                       const Divider(height: 32),
 
@@ -668,7 +718,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       const Text('Form Tanggapan Administrator', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(height: 12),
 
-                      // Dropdown Update Status
                       DropdownButtonFormField<String>(
                         value: selectedStatus,
                         decoration: const InputDecoration(
@@ -688,9 +737,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Input Feedback Admin
                       TextField(
                         controller: feedbackController,
+                        style: const TextStyle(color: Colors.black87),
                         maxLines: 3,
                         decoration: const InputDecoration(
                           labelText: 'Feedback / Catatan Admin ke Siswa',
@@ -699,7 +748,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Tombol Pilih Foto dari Galeri
                       const Text('Kirim Foto Balasan ke Siswa (Pilih dari Galeri):',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
@@ -710,7 +758,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Preview Foto Balasan Terpilih
                       if (selectedImageBytes != null)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -753,11 +800,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                           String? uploadedAdminPhotoUrl = data['fotoUrlAdmin'];
 
-                          // Upload gambar galeri ke Firebase Storage
+                          // Upload dengan Timeout & Penanganan Error
                           if (selectedImageBytes != null) {
                             try {
-                              String fileName =
-                                  'admin_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                              String fileName = 'admin_${DateTime.now().millisecondsSinceEpoch}.jpg';
                               Reference ref = FirebaseStorage.instance
                                   .ref()
                                   .child('balasan_admin/$fileName');
@@ -767,31 +813,43 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 SettableMetadata(contentType: 'image/jpeg'),
                               );
 
-                              TaskSnapshot snapshot = await uploadTask;
+                              TaskSnapshot snapshot = await uploadTask.timeout(const Duration(seconds: 12));
                               uploadedAdminPhotoUrl = await snapshot.ref.getDownloadURL();
                             } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Gagal mengunggah foto balasan: $e')),
-                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Storage Warning: Gagal upload gambar ($e). Mengirim tanggapan teks saja.')),
+                                );
+                              }
                             }
                           }
 
-                          // Update Firestore Data Realtime
-                          await FirebaseFirestore.instance
-                              .collection('aspirasi')
-                              .doc(docId)
-                              .update({
-                            'status': selectedStatus,
-                            'feedbackAdmin': feedbackController.text,
-                            if (uploadedAdminPhotoUrl != null)
-                              'fotoUrlAdmin': uploadedAdminPhotoUrl,
-                          });
+                          // Update Firestore
+                          try {
+                            await FirebaseFirestore.instance
+                                .collection('aspirasi')
+                                .doc(docId)
+                                .update({
+                              'status': selectedStatus,
+                              'feedbackAdmin': feedbackController.text,
+                              if (uploadedAdminPhotoUrl != null)
+                                'fotoUrlAdmin': uploadedAdminPhotoUrl,
+                            });
 
-                          if (context.mounted) {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Tanggapan dan update berhasil dikirim!')),
-                            );
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Tanggapan & Status Berhasil Diperbarui!')),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Gagal memperbarui database: $e')),
+                              );
+                            }
+                          } finally {
+                            setDialogState(() => isUploading = false);
                           }
                         },
                   child: isUploading
