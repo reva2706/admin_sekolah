@@ -1,10 +1,10 @@
 import 'dart:html' as html;
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -261,7 +261,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return timestamp.toString();
   }
 
-  // Pengecekan Lokasi & Kategori
   String _getLokasi(Map<String, dynamic> data) {
     String kat = data['kategori'] ?? '';
     String lok = data['lokasi'] ?? '';
@@ -271,7 +270,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return lok.isNotEmpty ? lok : (kat.isNotEmpty ? kat : '-');
   }
 
-  // Pengecekan Keterangan Laporan
   String _getKeterangan(Map<String, dynamic> data) {
     return data['keterangan'] ??
         data['detail'] ??
@@ -281,7 +279,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
         '-';
   }
 
-  // Pengecekan Foto Siswa
   String? _getFotoSiswa(Map<String, dynamic> data) {
     return data['fotoUrl'] ??
         data['imageUrl'] ??
@@ -395,57 +392,67 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 const SizedBox(height: 28),
 
-                // Kolom Pencarian (Diperjelas Teks Input & Hint Text)
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        style: const TextStyle(
-                          color: Color(0xFF0F172A),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            searchQuery = value;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          hintText: 'Cari berdasarkan NIS atau Nama Siswa...',
-                          hintStyle: const TextStyle(color: Colors.black45, fontSize: 14),
-                          prefixIcon: const Icon(Icons.search, color: Color(0xFF0F1D38)),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Colors.black26),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Colors.black26),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF0F1D38), width: 2),
-                          ),
-                        ),
-                      ),
+                // KOLOM PENCARIAN
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
+                  ),
+                  child: TextField(
+                    style: const TextStyle(
+                      color: Color(0xFF0F172A),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                     ),
-                    if (selectedFilter != 'Semua') ...[
-                      const SizedBox(width: 12),
-                      Chip(
-                        label: Text('Filter: $selectedFilter'),
-                        deleteIcon: const Icon(Icons.close, size: 18),
-                        onDeleted: () {
-                          setState(() {
-                            selectedFilter = 'Semua';
-                          });
-                        },
+                    onChanged: (value) {
+                      setState(() {
+                        searchQuery = value;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Cari berdasarkan NIS atau Nama Siswa...',
+                      hintStyle: const TextStyle(
+                        color: Colors.black45,
+                        fontSize: 14,
+                        fontWeight: FontWeight.normal,
                       ),
-                    ]
-                  ],
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFF0F1D38), size: 22),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.black26),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.black26),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF0F1D38), width: 2),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    ),
+                  ),
                 ),
+                if (selectedFilter != 'Semua') ...[
+                  const SizedBox(height: 12),
+                  Chip(
+                    label: Text('Filter Status: $selectedFilter', style: const TextStyle(color: Colors.white)),
+                    backgroundColor: const Color(0xFF0F1D38),
+                    deleteIcon: const Icon(Icons.close, size: 18, color: Colors.white),
+                    onDeleted: () {
+                      setState(() {
+                        selectedFilter = 'Semua';
+                      });
+                    },
+                  ),
+                ],
                 const SizedBox(height: 24),
 
                 // Tabel Data
@@ -604,11 +611,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // DIALOG RESPONS / DETAIL LAPORAN
   void _showDetailDialog(BuildContext context, String docId, Map<String, dynamic> data) {
     String selectedStatus = data['status'] ?? 'Menunggu';
     final feedbackController = TextEditingController(text: data['feedbackAdmin'] ?? '');
 
+    String? base64ImageString;
     Uint8List? selectedImageBytes;
     String? selectedFileName;
     bool isUploading = false;
@@ -628,11 +635,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 final file = input.files?.first;
                 if (file != null) {
                   final reader = html.FileReader();
-                  reader.readAsArrayBuffer(file);
+                  reader.readAsDataUrl(file); // Konversi otomatis ke Base64
                   reader.onLoadEnd.listen((event) {
                     setDialogState(() {
-                      selectedImageBytes = reader.result as Uint8List?;
-                      selectedFileName = file.name;
+                      base64ImageString = reader.result as String?;
+                      final readerBytes = html.FileReader();
+                      readerBytes.readAsArrayBuffer(file);
+                      readerBytes.onLoadEnd.listen((e) {
+                        setDialogState(() {
+                          selectedImageBytes = readerBytes.result as Uint8List?;
+                          selectedFileName = file.name;
+                        });
+                      });
                     });
                   });
                 }
@@ -641,7 +655,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
             String ketSiswa = _getKeterangan(data);
             String? fotoSiswaUrl = _getFotoSiswa(data);
-            bool hasImageFlag = data['hasImage'] == true;
 
             return AlertDialog(
               title: Text('Detail Laporan - ID: $docId'),
@@ -651,7 +664,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Ringkasan
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -673,7 +685,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Keterangan Siswa
                       const Text('Keterangan / Rincian dari Siswa:', style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
                       Container(
@@ -691,30 +702,27 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Foto dari Siswa
                       const Text('Foto Bukti dari Siswa:', style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       (fotoSiswaUrl != null && fotoSiswaUrl.isNotEmpty)
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                fotoSiswaUrl,
-                                height: 180,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Text('Gagal memuat foto dari siswa.', style: TextStyle(color: Colors.red)),
-                              ),
+                              child: fotoSiswaUrl.startsWith('data:image')
+                                  ? Image.memory(
+                                      base64Decode(fotoSiswaUrl.split(',').last),
+                                      height: 180,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.network(
+                                      fotoSiswaUrl,
+                                      height: 180,
+                                      fit: BoxFit.cover,
+                                    ),
                             )
-                          : Text(
-                              hasImageFlag
-                                  ? 'Siswa melampirkan foto di HP, tetapi URL foto belum tersimpan di Firestore.'
-                                  : 'Siswa tidak melampirkan foto.',
-                              style: TextStyle(color: hasImageFlag ? Colors.orange.shade800 : Colors.grey, fontSize: 13),
-                            ),
+                          : const Text('Siswa tidak melampirkan foto.', style: TextStyle(color: Colors.grey, fontSize: 13)),
 
                       const Divider(height: 32),
 
-                      // FORM BALASAN ADMIN
                       const Text('Form Tanggapan Administrator', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(height: 12),
 
@@ -748,7 +756,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       const SizedBox(height: 16),
 
-                      const Text('Kirim Foto Balasan ke Siswa (Pilih dari Galeri):',
+                      const Text('Kirim Foto Balasan ke Siswa (100% Gratis Tanpa Storage):',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
@@ -778,7 +786,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             const SizedBox(height: 4),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.network(data['fotoUrlAdmin'], height: 120, fit: BoxFit.cover),
+                              child: data['fotoUrlAdmin'].toString().startsWith('data:image')
+                                  ? Image.memory(
+                                      base64Decode(data['fotoUrlAdmin'].toString().split(',').last),
+                                      height: 120,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.network(data['fotoUrlAdmin'], height: 120, fit: BoxFit.cover),
                             ),
                           ],
                         ),
@@ -798,33 +812,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       : () async {
                           setDialogState(() => isUploading = true);
 
-                          String? uploadedAdminPhotoUrl = data['fotoUrlAdmin'];
-
-                          // Upload dengan Timeout & Penanganan Error
-                          if (selectedImageBytes != null) {
-                            try {
-                              String fileName = 'admin_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                              Reference ref = FirebaseStorage.instance
-                                  .ref()
-                                  .child('balasan_admin/$fileName');
-
-                              UploadTask uploadTask = ref.putData(
-                                selectedImageBytes!,
-                                SettableMetadata(contentType: 'image/jpeg'),
-                              );
-
-                              TaskSnapshot snapshot = await uploadTask.timeout(const Duration(seconds: 12));
-                              uploadedAdminPhotoUrl = await snapshot.ref.getDownloadURL();
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Storage Warning: Gagal upload gambar ($e). Mengirim tanggapan teks saja.')),
-                                );
-                              }
-                            }
+                          String? finalPhotoAdmin = data['fotoUrlAdmin'];
+                          if (base64ImageString != null) {
+                            finalPhotoAdmin = base64ImageString;
                           }
 
-                          // Update Firestore
                           try {
                             await FirebaseFirestore.instance
                                 .collection('aspirasi')
@@ -832,8 +824,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 .update({
                               'status': selectedStatus,
                               'feedbackAdmin': feedbackController.text,
-                              if (uploadedAdminPhotoUrl != null)
-                                'fotoUrlAdmin': uploadedAdminPhotoUrl,
+                              if (finalPhotoAdmin != null)
+                                'fotoUrlAdmin': finalPhotoAdmin,
                             });
 
                             if (context.mounted) {
