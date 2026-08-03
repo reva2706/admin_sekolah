@@ -1,5 +1,4 @@
 import 'dart:html' as html;
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -328,7 +327,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-  // Fungsi Cetak Laporan (Print / PDF)
   void _cetakLaporan(List<QueryDocumentSnapshot> filteredDocs) {
     var printWindow = html.window.open('', '_blank');
     
@@ -366,7 +364,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
             h2, h4 { text-align: center; margin: 4px 0; }
-            table { width: 100% ; border-collapse: collapse; margin-top: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
             th, td { border: 1px solid #999; padding: 8px 12px; font-size: 12px; text-align: left; }
             th { background-color: #0F1D38; color: white; }
             tr:nth-child(even) { background-color: #f9f9f9; }
@@ -486,7 +484,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Kartu Statistik
                 LayoutBuilder(
                   builder: (context, constraints) {
                     double cardWidth = constraints.maxWidth > 800
@@ -496,41 +493,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       spacing: 16,
                       runSpacing: 16,
                       children: [
-                        _buildClickableStatCard(
-                          'Total Laporan',
-                          total.toString(),
-                          Colors.blue,
-                          cardWidth,
-                          'Semua',
-                        ),
-                        _buildClickableStatCard(
-                          'Menunggu',
-                          menunggu.toString(),
-                          Colors.orange,
-                          cardWidth,
-                          'Menunggu',
-                        ),
-                        _buildClickableStatCard(
-                          'Diproses',
-                          diproses.toString(),
-                          Colors.purple,
-                          cardWidth,
-                          'Diproses',
-                        ),
-                        _buildClickableStatCard(
-                          'Selesai',
-                          selesai.toString(),
-                          Colors.green,
-                          cardWidth,
-                          'Selesai',
-                        ),
+                        _buildClickableStatCard('Total Laporan', total.toString(), Colors.blue, cardWidth, 'Semua'),
+                        _buildClickableStatCard('Menunggu', menunggu.toString(), Colors.orange, cardWidth, 'Menunggu'),
+                        _buildClickableStatCard('Diproses', diproses.toString(), Colors.purple, cardWidth, 'Diproses'),
+                        _buildClickableStatCard('Selesai', selesai.toString(), Colors.green, cardWidth, 'Selesai'),
                       ],
                     );
                   },
                 ),
                 const SizedBox(height: 28),
 
-                // PANEL FILTER PERIODE & TOMBOL CETAK LAPORAN
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -560,10 +532,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               foregroundColor: Colors.white,
                             ),
                             icon: const Icon(Icons.print, size: 18),
-                            label: Text('Cetak Laporan (${selectedPeriode})'),
-                            onPressed: filteredDocs.isEmpty
-                                ? null
-                                : () => _cetakLaporan(filteredDocs),
+                            label: Text('Cetak Laporan ($selectedPeriode)'),
+                            onPressed: filteredDocs.isEmpty ? null : () => _cetakLaporan(filteredDocs),
                           ),
                         ],
                       ),
@@ -611,7 +581,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 const SizedBox(height: 16),
 
-                // KOLOM PENCARIAN
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -674,7 +643,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ],
                 const SizedBox(height: 24),
 
-                // Tabel Data
                 Card(
                   elevation: 2,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -844,7 +812,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-
             void pickGalleryImage() {
               final html.FileUploadInputElement input = html.FileUploadInputElement();
               input.accept = 'image/*';
