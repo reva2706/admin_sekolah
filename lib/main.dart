@@ -250,10 +250,9 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   String searchQuery = '';
-  String selectedFilter = 'Semua'; // Status filter ('Semua', 'Menunggu', 'Diproses', 'Selesai')
+  String selectedFilter = 'Semua'; 
   
-  // State Filter Periode Tanggal Laporan
-  String selectedPeriode = 'Semua'; // 'Semua', 'Minggu Ini', 'Bulan Ini', 'Custom'
+  String selectedPeriode = 'Semua'; 
   DateTime? startDate;
   DateTime? endDate;
 
@@ -292,7 +291,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
         data['image'];
   }
 
-  // Fungsi mengatur filter periode waktu
   void _aturFilterPeriode(String periode) {
     setState(() {
       selectedPeriode = periode;
@@ -311,7 +309,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     });
   }
 
-  // Fungsi memunculkan kalender date range picker
   Future<void> _pilihRentangTanggalCustom(BuildContext context) async {
     DateTimeRange? picked = await showDateRangePicker(
       context: context,
@@ -329,6 +326,91 @@ class _AdminDashboardState extends State<AdminDashboard> {
         endDate = DateTime(picked.end.year, picked.end.month, picked.end.day, 23, 59, 59);
       });
     }
+  }
+
+  // Fungsi Cetak Laporan (Print / PDF)
+  void _cetakLaporan(List<QueryDocumentSnapshot> filteredDocs) {
+    var printWindow = html.window.open('', '_blank');
+    
+    String rowsHtml = '';
+    int no = 1;
+    for (var doc in filteredDocs) {
+      var data = doc.data() as Map<String, dynamic>;
+      String tanggal = _formatTimestamp(data['createdAt'] ?? data['timestamp']);
+      String nis = data['nis'] ?? data['nisn'] ?? '-';
+      String kelas = data['kelas'] ?? '';
+      String nisKelas = kelas.isNotEmpty ? '$nis / $kelas' : nis;
+      String nama = data['nama'] ?? 'Tanpa Nama';
+      String lokasi = _getLokasi(data);
+      String ket = _getKeterangan(data);
+      String status = data['status'] ?? 'Menunggu';
+
+      rowsHtml += '''
+        <tr>
+          <td>$no</td>
+          <td>$tanggal</td>
+          <td>$nisKelas</td>
+          <td>$nama</td>
+          <td>$lokasi</td>
+          <td>$ket</td>
+          <td>$status</td>
+        </tr>
+      ''';
+      no++;
+    }
+
+    String htmlContent = '''
+      <html>
+        <head>
+          <title>Laporan Aspirasi Siswa - SMKN 1 Sanden</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+            h2, h4 { text-align: center; margin: 4px 0; }
+            table { width: 100% ; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #999; padding: 8px 12px; font-size: 12px; text-align: left; }
+            th { background-color: #0F1D38; color: white; }
+            tr:nth-child(even) { background-color: #f9f9f9; }
+            .footer { margin-top: 30px; text-align: right; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <h2>PEMERINTAH DAERAH ISTIMEWA YOGYAKARTA</h2>
+          <h2>DINAS PENDIDIKAN, PEMUDA, DAN OLAHRAGA</h2>
+          <h2>SMK NEGERI 1 SANDEN</h2>
+          <h4>Laporan Aspirasi & Pengaduan Siswa</h4>
+          <p style="text-align:center; font-size: 13px; color: #555;">Periode Filter: <b>$selectedPeriode</b> | Status: <b>$selectedFilter</b></p>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Tanggal</th>
+                <th>NIS / Kelas</th>
+                <th>Nama Siswa</th>
+                <th>Kategori / Lokasi</th>
+                <th>Keterangan</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              $rowsHtml
+            </tbody>
+          </table>
+
+          <div class="footer">
+            <p>Dicetak otomatis dari Portal Admin SMKN 1 Sanden</p>
+          </div>
+
+          <script>
+            window.onload = function() { window.print(); }
+          </script>
+        </body>
+      </html>
+    ''';
+
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   }
 
   @override
@@ -374,7 +456,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             return st == 'Selesai';
           }).length;
 
-          // Filter Data Berdasarkan Status, Nama/NIS, dan Periode Tanggal
           var filteredDocs = docs.where((doc) {
             var data = doc.data() as Map<String, dynamic>;
             String status = data['status'] ?? 'Menunggu';
@@ -385,7 +466,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             bool matchesFilter = (selectedFilter == 'Semua') || (status == selectedFilter);
             bool matchesSearch = nama.contains(query) || nis.contains(query);
 
-            // Filter Waktu / Tanggal
             bool matchesDate = true;
             if (startDate != null && endDate != null) {
               dynamic rawTs = data['createdAt'] ?? data['timestamp'];
@@ -450,7 +530,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 const SizedBox(height: 28),
 
-                // PANEL FILTER DETAIL LAPORAN (PER MINGGU / PER BULAN / CUSTOM)
+                // PANEL FILTER PERIODE & TOMBOL CETAK LAPORAN
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -467,9 +547,25 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Filter Detail Laporan Berdasarkan Waktu:',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F1D38)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Filter Detail Laporan Berdasarkan Waktu:',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F1D38)),
+                          ),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green.shade700,
+                              foregroundColor: Colors.white,
+                            ),
+                            icon: const Icon(Icons.print, size: 18),
+                            label: Text('Cetak Laporan (${selectedPeriode})'),
+                            onPressed: filteredDocs.isEmpty
+                                ? null
+                                : () => _cetakLaporan(filteredDocs),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
                       Wrap(
@@ -879,7 +975,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       const SizedBox(height: 16),
 
-                      const Text('Kirim Foto Balasan ke Siswa (100% Gratis Tanpa Storage):',
+                      const Text('Kirim Foto Balasan ke Siswa:',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
