@@ -250,7 +250,12 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   String searchQuery = '';
-  String selectedFilter = 'Semua';
+  String selectedFilter = 'Semua'; // Status filter ('Semua', 'Menunggu', 'Diproses', 'Selesai')
+  
+  // State Filter Periode Tanggal Laporan
+  String selectedPeriode = 'Semua'; // 'Semua', 'Minggu Ini', 'Bulan Ini', 'Custom'
+  DateTime? startDate;
+  DateTime? endDate;
 
   String _formatTimestamp(dynamic timestamp) {
     if (timestamp == null) return '-';
@@ -285,6 +290,45 @@ class _AdminDashboardState extends State<AdminDashboard> {
         data['fotoUrlSiswa'] ??
         data['foto'] ??
         data['image'];
+  }
+
+  // Fungsi mengatur filter periode waktu
+  void _aturFilterPeriode(String periode) {
+    setState(() {
+      selectedPeriode = periode;
+      DateTime now = DateTime.now();
+
+      if (periode == 'Minggu Ini') {
+        startDate = now.subtract(const Duration(days: 7));
+        endDate = now;
+      } else if (periode == 'Bulan Ini') {
+        startDate = DateTime(now.year, now.month, 1);
+        endDate = now;
+      } else if (periode == 'Semua') {
+        startDate = null;
+        endDate = null;
+      }
+    });
+  }
+
+  // Fungsi memunculkan kalender date range picker
+  Future<void> _pilihRentangTanggalCustom(BuildContext context) async {
+    DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2023, 1, 1),
+      lastDate: DateTime(2100, 12, 31),
+      initialDateRange: startDate != null && endDate != null
+          ? DateTimeRange(start: startDate!, end: endDate!)
+          : null,
+    );
+
+    if (picked != null) {
+      setState(() {
+        selectedPeriode = 'Custom';
+        startDate = picked.start;
+        endDate = DateTime(picked.end.year, picked.end.month, picked.end.day, 23, 59, 59);
+      });
+    }
   }
 
   @override
@@ -330,6 +374,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             return st == 'Selesai';
           }).length;
 
+          // Filter Data Berdasarkan Status, Nama/NIS, dan Periode Tanggal
           var filteredDocs = docs.where((doc) {
             var data = doc.data() as Map<String, dynamic>;
             String status = data['status'] ?? 'Menunggu';
@@ -340,7 +385,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
             bool matchesFilter = (selectedFilter == 'Semua') || (status == selectedFilter);
             bool matchesSearch = nama.contains(query) || nis.contains(query);
 
-            return matchesFilter && matchesSearch;
+            // Filter Waktu / Tanggal
+            bool matchesDate = true;
+            if (startDate != null && endDate != null) {
+              dynamic rawTs = data['createdAt'] ?? data['timestamp'];
+              if (rawTs is Timestamp) {
+                DateTime docDate = rawTs.toDate();
+                matchesDate = docDate.isAfter(startDate!.subtract(const Duration(seconds: 1))) &&
+                    docDate.isBefore(endDate!.add(const Duration(seconds: 1)));
+              } else {
+                matchesDate = false;
+              }
+            }
+
+            return matchesFilter && matchesSearch && matchesDate;
           }).toList();
 
           return SingleChildScrollView(
@@ -391,6 +449,71 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   },
                 ),
                 const SizedBox(height: 28),
+
+                // PANEL FILTER DETAIL LAPORAN (PER MINGGU / PER BULAN / CUSTOM)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Filter Detail Laporan Berdasarkan Waktu:',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F1D38)),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          ChoiceChip(
+                            label: const Text('Semua Waktu'),
+                            selected: selectedPeriode == 'Semua',
+                            onSelected: (selected) => _aturFilterPeriode('Semua'),
+                            selectedColor: Colors.amber.shade200,
+                          ),
+                          ChoiceChip(
+                            label: const Text('Laporan Minggu Ini'),
+                            selected: selectedPeriode == 'Minggu Ini',
+                            onSelected: (selected) => _aturFilterPeriode('Minggu Ini'),
+                            selectedColor: Colors.amber.shade200,
+                          ),
+                          ChoiceChip(
+                            label: const Text('Laporan Bulan Ini'),
+                            selected: selectedPeriode == 'Bulan Ini',
+                            onSelected: (selected) => _aturFilterPeriode('Bulan Ini'),
+                            selectedColor: Colors.amber.shade200,
+                          ),
+                          ActionChip(
+                            avatar: const Icon(Icons.date_range, size: 16),
+                            label: Text(selectedPeriode == 'Custom' && startDate != null && endDate != null
+                                ? 'Custom: ${_formatTimestamp(Timestamp.fromDate(startDate!)).split(' ')[0]} - ${_formatTimestamp(Timestamp.fromDate(endDate!)).split(' ')[0]}'
+                                : 'Pilih Rentang Tanggal'),
+                            onPressed: () => _pilihRentangTanggalCustom(context),
+                            backgroundColor: selectedPeriode == 'Custom' ? Colors.amber.shade200 : Colors.grey.shade200,
+                          ),
+                          if (selectedPeriode != 'Semua')
+                            TextButton.icon(
+                              onPressed: () => _aturFilterPeriode('Semua'),
+                              icon: const Icon(Icons.refresh, size: 16),
+                              label: const Text('Reset Filter Waktu'),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
 
                 // KOLOM PENCARIAN
                 Container(
@@ -468,7 +591,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Daftar Laporan Aspirasi ($selectedFilter)',
+                              'Daftar Laporan Aspirasi (Status: $selectedFilter | Periode: $selectedPeriode)',
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                             Text('${filteredDocs.length} Data Ditampilkan',
@@ -479,7 +602,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         filteredDocs.isEmpty
                             ? const Padding(
                                 padding: EdgeInsets.all(32.0),
-                                child: Center(child: Text('Data tidak ditemukan.')),
+                                child: Center(child: Text('Data tidak ditemukan pada filter/rentang waktu ini.')),
                               )
                             : SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
@@ -635,7 +758,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 final file = input.files?.first;
                 if (file != null) {
                   final reader = html.FileReader();
-                  reader.readAsDataUrl(file); // Konversi otomatis ke Base64
+                  reader.readAsDataUrl(file);
                   reader.onLoadEnd.listen((event) {
                     setDialogState(() {
                       base64ImageString = reader.result as String?;
