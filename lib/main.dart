@@ -131,28 +131,20 @@ class _AdminLoginState extends State<AdminLogin> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // MEMPERBAIKI LOGO MENJADI ASSETS GAMBAR
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0F1D38),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.amber, width: 2),
-                            ),
-                            child: ClipOval(
-                              child: Image.asset(
-                                'assets/logo_sekolah.png',
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Icon(
-                                    Icons.shield,
-                                    size: 40,
-                                    color: Colors.amber,
-                                  );
-                                },
-                              ),
+                          // LOGO BERSIH TANPA LINGKARAN HITAM/EMAS
+                          ClipOval(
+                            child: Image.asset(
+                              'assets/logo_sekolah.png',
+                              width: 70,
+                              height: 70,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.shield,
+                                  size: 50,
+                                  color: Colors.indigo,
+                                );
+                              },
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -525,7 +517,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 const SizedBox(height: 28),
 
-                // KOTAK FILTER PERIODE & CETAK LAPORAN (DIBUAT RESPONSIF AGAR TIDAK TERPOTONG)
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -542,7 +533,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // MENGGUNAKAN WRAP AGAR JUDUL DAN TOMBOL CETAK AMAN DI LAYAR HP
                       Wrap(
                         alignment: WrapAlignment.spaceBetween,
                         crossAxisAlignment: WrapCrossAlignment.center,
@@ -560,7 +550,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             ),
                             icon: const Icon(Icons.print, size: 18),
-                            // MEMBUAT TEKS TOMBOL FLEKSIBEL MENYESUAIKAN UKURAN HP
                             label: Text(
                               'Cetak Laporan ($selectedPeriode)',
                               overflow: TextOverflow.ellipsis,
@@ -613,7 +602,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 const SizedBox(height: 16),
 
-                // KOTAK PENCARIAN TERHUBUNG DENGAN CONTROLLER
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -696,7 +684,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // MEMPERBAIKI JUDUL TABEL LAPORAN AGAR TIDAK TERPOTONG DI HP
                         Wrap(
                           alignment: WrapAlignment.spaceBetween,
                           crossAxisAlignment: WrapCrossAlignment.center,
