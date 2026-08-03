@@ -131,21 +131,19 @@ class _AdminLoginState extends State<AdminLogin> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // LOGO BERSIH TANPA LINGKARAN HITAM/EMAS
-                          ClipOval(
-                            child: Image.asset(
-                              'assets/logo_sekolah.png',
-                              width: 70,
-                              height: 70,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(
-                                  Icons.shield,
-                                  size: 50,
-                                  color: Colors.indigo,
-                                );
-                              },
-                            ),
+                          // LOGO UTUH ASLI TANPA BINGKAI DAN TANPA PEMOTONG BENTUK
+                          Image.asset(
+                            'assets/logo_sekolah.png',
+                            width: 75,
+                            height: 75,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(
+                                Icons.shield,
+                                size: 50,
+                                color: Colors.indigo,
+                              );
+                            },
                           ),
                           const SizedBox(height: 20),
                           const Text(
