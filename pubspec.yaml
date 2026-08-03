@@ -25,3 +25,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # MENAMBAHKAN ASSETS
+  assets:
+    - assets/logo_sekolah.png
