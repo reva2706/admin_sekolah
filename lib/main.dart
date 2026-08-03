@@ -133,7 +133,7 @@ class _AdminLoginState extends State<AdminLogin> {
                         children: [
                           // LOGO UTUH ASLI TANPA BINGKAI DAN TANPA PEMOTONG BENTUK
                           Image.asset(
-                            'assets/logo_sekolah.png',
+                            'assets/logo_sekolahbg.png',
                             width: 75,
                             height: 75,
                             fit: BoxFit.contain,
