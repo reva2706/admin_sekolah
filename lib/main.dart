@@ -115,121 +115,136 @@ class _AdminLoginState extends State<AdminLogin> {
         ),
         child: Center(
           child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Card(
-                  elevation: 8,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(32),
-                    width: 380,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0F1D38),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.amber, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.shield,
-                            size: 40,
-                            color: Colors.amber,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'PORTAL ADMIN ASPIRASI',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                            color: Color(0xFF0F172A),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Sistem Pengaduan Aspirasi SMKN 1 Sanden',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 28),
-                        TextField(
-                          controller: _emailController,
-                          style: const TextStyle(color: Colors.black87),
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: InputDecoration(
-                            hintText: 'Email Administrator',
-                            hintStyle: const TextStyle(color: Colors.grey),
-                            prefixIcon: const Icon(Icons.email_outlined),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Card(
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(32),
+                      width: 380,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // MEMPERBAIKI LOGO MENJADI ASSETS GAMBAR
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F1D38),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.amber, width: 2),
+                            ),
+                            child: ClipOval(
+                              child: Image.asset(
+                                'assets/logo_sekolah.png',
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(
+                                    Icons.shield,
+                                    size: 40,
+                                    color: Colors.amber,
+                                  );
+                                },
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _passwordController,
-                          style: const TextStyle(color: Colors.black87),
-                          obscureText: _obscureText,
-                          decoration: InputDecoration(
-                            hintText: 'Password',
-                            hintStyle: const TextStyle(color: Colors.grey),
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            suffixIcon: IconButton(
-                              icon: Icon(_obscureText
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined),
-                              onPressed: () {
-                                setState(() {
-                                  _obscureText = !_obscureText;
-                                });
-                              },
+                          const SizedBox(height: 20),
+                          const Text(
+                            'PORTAL ADMIN ASPIRASI',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                              color: Color(0xFF0F172A),
                             ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            textAlign: TextAlign.center,
                           ),
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0F1D38),
-                              shape: RoundedRectangleBorder(
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Sistem Pengaduan Aspirasi SMKN 1 Sanden',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 28),
+                          TextField(
+                            controller: _emailController,
+                            style: const TextStyle(color: Colors.black87),
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(
+                              hintText: 'Email Administrator',
+                              hintStyle: const TextStyle(color: Colors.grey),
+                              prefixIcon: const Icon(Icons.email_outlined),
+                              border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            onPressed: _isLoading ? null : _login,
-                            child: _isLoading
-                                ? const CircularProgressIndicator(color: Colors.amber)
-                                : const Text(
-                                    'MASUK KE CONTROL PANEL',
-                                    style: TextStyle(
-                                      color: Colors.amber,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _passwordController,
+                            style: const TextStyle(color: Colors.black87),
+                            obscureText: _obscureText,
+                            decoration: InputDecoration(
+                              hintText: 'Password',
+                              hintStyle: const TextStyle(color: Colors.grey),
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                icon: Icon(_obscureText
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureText = !_obscureText;
+                                  });
+                                },
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF0F1D38),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: _isLoading ? null : _login,
+                              child: _isLoading
+                                  ? const CircularProgressIndicator(color: Colors.amber)
+                                  : const Text(
+                                      'MASUK KE CONTROL PANEL',
+                                      style: TextStyle(
+                                        color: Colors.amber,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Portal Admin SMKN 1 Sanden • Developed by Nareva Ranov P',
-                  style: TextStyle(color: Colors.white54, fontSize: 12),
-                )
-              ],
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Portal Admin SMKN 1 Sanden • Developed by Nareva Ranov P',
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                    textAlign: TextAlign.center,
+                  )
+                ],
+              ),
             ),
           ),
         ),
@@ -510,6 +525,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 const SizedBox(height: 28),
 
+                // KOTAK FILTER PERIODE & CETAK LAPORAN (DIBUAT RESPONSIF AGAR TIDAK TERPOTONG)
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -526,8 +542,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      // MENGGUNAKAN WRAP AGAR JUDUL DAN TOMBOL CETAK AMAN DI LAYAR HP
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        runSpacing: 12,
+                        spacing: 12,
                         children: [
                           const Text(
                             'Filter Detail Laporan Berdasarkan Waktu:',
@@ -537,9 +557,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green.shade700,
                               foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             ),
                             icon: const Icon(Icons.print, size: 18),
-                            label: Text('Cetak Laporan ($selectedPeriode)'),
+                            // MEMBUAT TEKS TOMBOL FLEKSIBEL MENYESUAIKAN UKURAN HP
+                            label: Text(
+                              'Cetak Laporan ($selectedPeriode)',
+                              overflow: TextOverflow.ellipsis,
+                            ),
                             onPressed: filteredDocs.isEmpty ? null : () => _cetakLaporan(filteredDocs),
                           ),
                         ],
@@ -671,12 +696,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        // MEMPERBAIKI JUDUL TABEL LAPORAN AGAR TIDAK TERPOTONG DI HP
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          runSpacing: 8,
+                          spacing: 12,
                           children: [
                             Text(
                               'Daftar Laporan Aspirasi (Status: $selectedFilter | Periode: $selectedPeriode)',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                             ),
                             Text('${filteredDocs.length} Data Ditampilkan',
                                 style: const TextStyle(color: Colors.grey, fontSize: 13)),
@@ -743,6 +772,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: Text(
                     'Portal Admin SMKN 1 Sanden • Developed by Nareva Ranov P',
                     style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ],
