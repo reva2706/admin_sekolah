@@ -329,8 +329,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   void _cetakLaporan(List<QueryDocumentSnapshot> filteredDocs) {
-    final html.Window printWindow = html.window.open('', '_blank') as html.Window;
-    
     String rowsHtml = '';
     int no = 1;
     for (var doc in filteredDocs) {
@@ -407,9 +405,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
       </html>
     ''';
 
-    printWindow.document?.open();
-    printWindow.document?.write(htmlContent);
-    printWindow.document?.close();
+    final blob = html.Blob([htmlContent], 'text/html');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    html.window.open(url, '_blank');
+    html.Url.revokeObjectUrl(url);
   }
 
   @override
