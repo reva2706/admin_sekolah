@@ -1,4 +1,5 @@
 import 'dart:html' as html;
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -328,7 +329,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   void _cetakLaporan(List<QueryDocumentSnapshot> filteredDocs) {
-    var printWindow = html.window.open('', '_blank');
+    final html.WindowBase printWindow = html.window.open('', '_blank');
     
     String rowsHtml = '';
     int no = 1;
@@ -406,9 +407,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
       </html>
     ''';
 
-    printWindow.document.open();
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    printWindow.document?.open();
+    printWindow.document?.write(htmlContent);
+    printWindow.document?.close();
   }
 
   @override
