@@ -454,15 +454,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
             return st == 'Selesai';
           }).length;
 
+          // LOGIKA PENCARIAN & FILTER DIPERBAIKI (MENDUKUNG PENCARIAN NAMA & NIS SEKALIGUS)
           var filteredDocs = docs.where((doc) {
             var data = doc.data() as Map<String, dynamic>;
             String status = data['status'] ?? 'Menunggu';
             String nama = (data['nama'] ?? data['namaSiswa'] ?? '').toString().toLowerCase();
             String nis = (data['nis'] ?? data['nisn'] ?? '').toString().toLowerCase();
-            String query = searchQuery.toLowerCase();
+            String query = searchQuery.toLowerCase().trim();
 
             bool matchesFilter = (selectedFilter == 'Semua') || (status == selectedFilter);
-            bool matchesSearch = nama.contains(query) || nis.contains(query);
+            bool matchesSearch = query.isEmpty || nama.contains(query) || nis.contains(query);
 
             bool matchesDate = true;
             if (startDate != null && endDate != null) {
@@ -581,6 +582,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 const SizedBox(height: 16),
 
+                // KOTAK PENCARIAN YANG RAPI DAN BERSIH
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -666,7 +668,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         filteredDocs.isEmpty
                             ? const Padding(
                                 padding: EdgeInsets.all(32.0),
-                                child: Center(child: Text('Data tidak ditemukan pada filter/rentang waktu ini.')),
+                                child: Center(child: Text('Data tidak ditemukan pada filter/pencarian ini.')),
                               )
                             : SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
