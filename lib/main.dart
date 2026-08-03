@@ -131,7 +131,6 @@ class _AdminLoginState extends State<AdminLogin> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // LOGO UTUH ASLI TANPA BINGKAI DAN TANPA PEMOTONG BENTUK
                           Image.asset(
                             'assets/logo_sekolahbg.png',
                             width: 75,
@@ -301,6 +300,43 @@ class _AdminDashboardState extends State<AdminDashboard> {
         data['fotoUrlSiswa'] ??
         data['foto'] ??
         data['image'];
+  }
+
+  // FUNGSI ZOOM / POPUP GAMBAR FULLSCREEN
+  void _showFullImage(BuildContext context, dynamic imageSource) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.black.withOpacity(0.9),
+          insetPadding: const EdgeInsets.all(10),
+          child: Stack(
+            alignment: Alignment.topRight,
+            children: [
+              Center(
+                child: InteractiveViewer(
+                  panEnabled: true,
+                  boundaryMargin: const EdgeInsets.all(20),
+                  minScale: 0.5,
+                  maxScale: 5.0,
+                  child: imageSource is Uint8List
+                      ? Image.memory(imageSource, fit: BoxFit.contain)
+                      : (imageSource.toString().startsWith('data:image')
+                          ? Image.memory(base64Decode(imageSource.toString().split(',').last), fit: BoxFit.contain)
+                          : Image.network(imageSource.toString(), fit: BoxFit.contain)),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _aturFilterPeriode(String periode) {
@@ -923,22 +959,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       const SizedBox(height: 12),
 
-                      const Text('Foto Bukti dari Siswa:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text('Foto Bukti dari Siswa (Klik untuk Zoom/Perbesar):', style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       (fotoSiswaUrl != null && fotoSiswaUrl.isNotEmpty)
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: fotoSiswaUrl.startsWith('data:image')
-                                  ? Image.memory(
-                                      base64Decode(fotoSiswaUrl.split(',').last),
-                                      height: 180,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Image.network(
-                                      fotoSiswaUrl,
-                                      height: 180,
-                                      fit: BoxFit.cover,
-                                    ),
+                          ? InkWell(
+                              onTap: () => _showFullImage(context, fotoSiswaUrl),
+                              child: Tooltip(
+                                message: 'Klik untuk memperbesar foto',
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: fotoSiswaUrl.startsWith('data:image')
+                                      ? Image.memory(
+                                          base64Decode(fotoSiswaUrl.split(',').last),
+                                          height: 180,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.network(
+                                          fotoSiswaUrl,
+                                          height: 180,
+                                          fit: BoxFit.cover,
+                                        ),
+                                ),
+                              ),
                             )
                           : const Text('Siswa tidak melampirkan foto.', style: TextStyle(color: Colors.grey, fontSize: 13)),
 
@@ -993,9 +1035,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           children: [
                             Text('File Terpilih: ${selectedFileName ?? 'Gambar Galeri'}'),
                             const SizedBox(height: 4),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.memory(selectedImageBytes!, height: 120, fit: BoxFit.cover),
+                            InkWell(
+                              onTap: () => _showFullImage(context, selectedImageBytes),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.memory(selectedImageBytes!, height: 120, fit: BoxFit.cover),
+                              ),
                             ),
                           ],
                         )
@@ -1003,17 +1048,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Foto Balasan Terkirim Sebelumnya:'),
+                            const Text('Foto Balasan Terkirim Sebelumnya (Klik untuk Zoom):'),
                             const SizedBox(height: 4),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: data['fotoUrlAdmin'].toString().startsWith('data:image')
-                                  ? Image.memory(
-                                      base64Decode(data['fotoUrlAdmin'].toString().split(',').last),
-                                      height: 120,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Image.network(data['fotoUrlAdmin'], height: 120, fit: BoxFit.cover),
+                            InkWell(
+                              onTap: () => _showFullImage(context, data['fotoUrlAdmin']),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: data['fotoUrlAdmin'].toString().startsWith('data:image')
+                                    ? Image.memory(
+                                        base64Decode(data['fotoUrlAdmin'].toString().split(',').last),
+                                        height: 120,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.network(data['fotoUrlAdmin'], height: 120, fit: BoxFit.cover),
+                              ),
                             ),
                           ],
                         ),
