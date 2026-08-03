@@ -329,7 +329,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   void _cetakLaporan(List<QueryDocumentSnapshot> filteredDocs) {
-    final html.WindowBase printWindow = html.window.open('', '_blank');
+    final html.Window printWindow = html.window.open('', '_blank') as html.Window;
     
     String rowsHtml = '';
     int no = 1;
