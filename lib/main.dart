@@ -249,12 +249,19 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
+  final TextEditingController _searchController = TextEditingController();
   String searchQuery = '';
   String selectedFilter = 'Semua'; 
   
   String selectedPeriode = 'Semua'; 
   DateTime? startDate;
   DateTime? endDate;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   String _formatTimestamp(dynamic timestamp) {
     if (timestamp == null) return '-';
@@ -454,7 +461,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             return st == 'Selesai';
           }).length;
 
-          // LOGIKA PENCARIAN & FILTER DIPERBAIKI (MENDUKUNG PENCARIAN NAMA & NIS SEKALIGUS)
           var filteredDocs = docs.where((doc) {
             var data = doc.data() as Map<String, dynamic>;
             String status = data['status'] ?? 'Menunggu';
@@ -582,7 +588,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 const SizedBox(height: 16),
 
-                // KOTAK PENCARIAN YANG RAPI DAN BERSIH
+                // KOTAK PENCARIAN TERHUBUNG DENGAN CONTROLLER
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -596,6 +602,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     ],
                   ),
                   child: TextField(
+                    controller: _searchController,
                     style: const TextStyle(
                       color: Color(0xFF0F172A),
                       fontSize: 15,
@@ -614,6 +621,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         fontWeight: FontWeight.normal,
                       ),
                       prefixIcon: const Icon(Icons.search, color: Color(0xFF0F1D38), size: 22),
+                      suffixIcon: searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, color: Colors.grey),
+                              onPressed: () {
+                                setState(() {
+                                  _searchController.clear();
+                                  searchQuery = '';
+                                });
+                              },
+                            )
+                          : null,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: Colors.black26),
