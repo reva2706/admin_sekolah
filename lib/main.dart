@@ -7,18 +7,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyB3_BlZbLyD1HeNZyZPDsAlNhlBqWDeUhU",
-      authDomain: "pengaduansekolah-eb875.firebaseapp.com",
-      projectId: "pengaduansekolah-eb875",
-      storageBucket: "pengaduansekolah-eb875.firebasestorage.app",
-      messagingSenderId: "265155033945",
-      appId: "1:265155033945:web:87b10e00993670c2922a48",
-    ),
+    options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(const AdminApp());
 }
