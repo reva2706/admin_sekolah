@@ -1,4 +1,4 @@
-name: Deploy to Firebase
+name: Deploy to Firebase Hosting & Functions
 
 on:
   push:
@@ -24,6 +24,7 @@ jobs:
       - name: Build Web
         run: flutter build web --release
 
+      # --- TAMBAHAN LANGKAH UNTUK CLOUD FUNCTIONS ---
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -33,16 +34,11 @@ jobs:
         run: npm install
         working-directory: ./functions
 
-      - name: Deploy to Firebase
+      - name: Deploy to Firebase (Hosting & Functions)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PENGADUANSEKOLAH }}'
+          channelId: live
           projectId: pengaduansekolah-eb875
-      
-      - name: Deploy Firebase Functions
-        uses: w9jds/firebase-action@master
-        with:
-          args: deploy --only functions
-        env:
-          FIREBASE_TOKEN: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PENGADUANSEKOLAH }}'
+          target: hosting
