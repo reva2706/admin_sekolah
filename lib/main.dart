@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -261,10 +263,105 @@ class _AdminDashboardState extends State<AdminDashboard> {
   DateTime? startDate;
   DateTime? endDate;
 
+  int _lastDocumentCount = 0;
+  bool _isFirstLoad = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initAdminNotifications();
+    _listenNewAspirasiRealtime();
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  // 1. Inisialisasi Izin & Simpan Token FCM Web Admin
+  Future<void> _initAdminNotifications() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      try {
+        String? token = await messaging.getToken();
+        if (token != null) {
+          await FirebaseFirestore.instance.collection('settings').doc('admin_token').set({
+            'fcmToken': token,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+          debugPrint("Token Admin Berhasil Disimpan: $token");
+        }
+      } catch (e) {
+        debugPrint("Gagal mengambil token web admin: $e");
+      }
+    }
+
+    // Mendengarkan pesan saat web terbuka (Foreground)
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.notification != null) {
+        _showAlertPopup(
+          message.notification!.title ?? "Laporan Baru Masuk!",
+          message.notification!.body ?? "Ada siswa mengirimkan pengaduan.",
+        );
+      }
+    });
+  }
+
+  // 2. Deteksi Realtime Firestore untuk Notifikasi Instan di Web Admin
+  void _listenNewAspirasiRealtime() {
+    FirebaseFirestore.instance
+        .collection('aspirasi')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .listen((snapshot) {
+      if (_isFirstLoad) {
+        _lastDocumentCount = snapshot.docs.length;
+        _isFirstLoad = false;
+        return;
+      }
+
+      if (snapshot.docs.length > _lastDocumentCount) {
+        var latestData = snapshot.docs.first.data() as Map<String, dynamic>;
+        String namaSiswa = latestData['nama'] ?? latestData['namaSiswa'] ?? 'Siswa';
+        String kategori = latestData['kategori'] ?? 'Pengaduan';
+
+        _showAlertPopup(
+          "🚨 Ada Laporan Baru Masuk!",
+          "$namaSiswa mengirim pengaduan baru kategori: $kategori",
+        );
+      }
+      _lastDocumentCount = snapshot.docs.length;
+    });
+  }
+
+  // 3. Tampilkan Popup Snackbar saat ada laporan baru
+  void _showAlertPopup(String title, String body) {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.amber)),
+            const SizedBox(height: 4),
+            Text(body, style: const TextStyle(fontSize: 14, color: Colors.white)),
+          ],
+        ),
+        backgroundColor: const Color(0xFF0F1D38),
+        duration: const Duration(seconds: 7),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   String _formatTimestamp(dynamic timestamp) {
