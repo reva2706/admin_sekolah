@@ -1,4 +1,4 @@
-name: Deploy to Firebase Hosting
+name: Deploy to Firebase
 
 on:
   push:
@@ -24,10 +24,25 @@ jobs:
       - name: Build Web
         run: flutter build web --release
 
-      - name: Deploy to Firebase Hosting
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Functions Dependencies
+        run: npm install
+        working-directory: ./functions
+
+      - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PENGADUANSEKOLAH }}'
-          channelId: live
           projectId: pengaduansekolah-eb875
+      
+      - name: Deploy Firebase Functions
+        uses: w9jds/firebase-action@master
+        with:
+          args: deploy --only functions
+        env:
+          FIREBASE_TOKEN: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PENGADUANSEKOLAH }}'
