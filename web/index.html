@@ -20,6 +20,22 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <!-- Script Firebase untuk Web Push Notification -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB3_BlZbLyD1HeNZyZPDsAlNhlBqWDeUhU",
+      authDomain: "pengaduansekolah-eb875.firebaseapp.com",
+      projectId: "pengaduansekolah-eb875",
+      storageBucket: "pengaduansekolah-eb875.firebasestorage.app",
+      messagingSenderId: "265155033945",
+      appId: "1:265155033945:web:87b10e00993670c2922a48",
+      measurementId: "G-WN6RZCQHEL"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
