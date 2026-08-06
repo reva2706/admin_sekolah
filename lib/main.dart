@@ -286,7 +286,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     super.dispose();
   }
 
-  // 1. Inisialisasi Izin & Simpan Token FCM Web Admin
   Future<void> _initAdminNotifications() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
@@ -304,14 +303,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
             'fcmToken': token,
             'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
-          debugPrint("Token Admin Berhasil Disimpan: $token");
         }
       } catch (e) {
         debugPrint("Gagal mengambil token web admin: $e");
       }
     }
 
-    // Mendengarkan pesan saat web terbuka (Foreground)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
         _showAlertPopup(
@@ -322,7 +319,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     });
   }
 
-  // 2. Deteksi Realtime Firestore untuk Notifikasi Instan di Web Admin
   void _listenNewAspirasiRealtime() {
     FirebaseFirestore.instance
         .collection('aspirasi')
@@ -349,7 +345,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     });
   }
 
-  // 3. Tampilkan Popup Snackbar saat ada laporan baru
   void _showAlertPopup(String title, String body) {
     if (!mounted) return;
     
@@ -406,7 +401,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
         data['image'];
   }
 
-  // FUNGSI ZOOM / POPUP GAMBAR FULLSCREEN
   void _showFullImage(BuildContext context, dynamic imageSource) {
     showDialog(
       context: context,
@@ -655,7 +649,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 const SizedBox(height: 20),
 
-                // FITUR GRAFIK / STATISTIK VISUAL
                 _buildVisualChartCard(total, menunggu, diproses, selesai),
                 const SizedBox(height: 28),
 
@@ -958,7 +951,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // WIDGET GRAFIK / STATISTIK VISUAL
   Widget _buildVisualChartCard(int total, int menunggu, int diproses, int selesai) {
     int maxVal = [total, menunggu, diproses, selesai].reduce((a, b) => a > b ? a : b);
     if (maxVal == 0) maxVal = 1;
