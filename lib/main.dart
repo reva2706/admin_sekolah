@@ -961,7 +961,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   // WIDGET GRAFIK / STATISTIK VISUAL
   Widget _buildVisualChartCard(int total, int menunggu, int diproses, int selesai) {
     int maxVal = [total, menunggu, diproses, selesai].reduce((a, b) => a > b ? a : b);
-    if (maxVal == 0) maxVal = 1; // Mencegah pembagian dengan nol
+    if (maxVal == 0) maxVal = 1;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1012,11 +1012,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildBarItem(String label, int value, Color color, int maxVal, double totalWidth) {
     double maxHeight = 130.0;
     double calculatedHeight = (value / maxVal) * maxHeight;
-    if (calculatedHeight < 15.0 && value > 0) calculatedHeight = 15.0; // Minimal tinggi bar agar terlihat
+    if (calculatedHeight < 15.0 && value > 0) calculatedHeight = 15.0;
 
     return Expanded(
       child: Column(
-        mainAxisAlignment: EndAlignmentObserver.none,
         children: [
           Text(
             value.toString(),
