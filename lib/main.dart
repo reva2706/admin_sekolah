@@ -653,6 +653,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     );
                   },
                 ),
+                const SizedBox(height: 20),
+
+                // FITUR GRAFIK / STATISTIK VISUAL
+                _buildVisualChartCard(total, menunggu, diproses, selesai),
                 const SizedBox(height: 28),
 
                 Container(
@@ -950,6 +954,94 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // WIDGET GRAFIK / STATISTIK VISUAL
+  Widget _buildVisualChartCard(int total, int menunggu, int diproses, int selesai) {
+    int maxVal = [total, menunggu, diproses, selesai].reduce((a, b) => a > b ? a : b);
+    if (maxVal == 0) maxVal = 1; // Mencegah pembagian dengan nol
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.bar_chart, color: Color(0xFF0F1D38)),
+              SizedBox(width: 8),
+              Text(
+                'Grafik Perbandingan Status Laporan Aspirasi',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F1D38)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _buildBarItem('Menunggu', menunggu, Colors.orange, maxVal, constraints.maxWidth),
+                  _buildBarItem('Diproses', diproses, Colors.purple, maxVal, constraints.maxWidth),
+                  _buildBarItem('Selesai', selesai, Colors.green, maxVal, constraints.maxWidth),
+                  _buildBarItem('Total', total, Colors.blue, maxVal, constraints.maxWidth),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBarItem(String label, int value, Color color, int maxVal, double totalWidth) {
+    double maxHeight = 130.0;
+    double calculatedHeight = (value / maxVal) * maxHeight;
+    if (calculatedHeight < 15.0 && value > 0) calculatedHeight = 15.0; // Minimal tinggi bar agar terlihat
+
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: EndAlignmentObserver.none,
+        children: [
+          Text(
+            value.toString(),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: color),
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            height: maxHeight,
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: totalWidth > 600 ? 50 : 28,
+              height: calculatedHeight,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.85),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
